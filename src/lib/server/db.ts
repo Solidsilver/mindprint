@@ -65,9 +65,9 @@ export function sanitizeProfile(p: unknown): Profile | null {
 	if (!a || !u) return null;
 	const e = num4(raw.e, 1, 30) || [13, 13, 13, 13];
 	const z: ZSummary = Array.isArray(raw.z)
-		? (raw.z as unknown[]).slice(0, 8).map((v) => {
+		? (raw.z as unknown[]).slice(0, 15).map((v) => {
 				if (v === null || v === undefined) return null;
-				if (typeof v === 'number' && isFinite(v)) return Math.round(v);
+				if (typeof v === 'number' && isFinite(v)) return Math.round(v * 10) / 10;
 				if (typeof v === 'string' && /^\d{1,2}\/\d{1,2}$/.test(v)) return v;
 				return null;
 			})

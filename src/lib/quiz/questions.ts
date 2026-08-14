@@ -40,7 +40,7 @@ export const TIER_INFO: Record<TierName, TierInfo> = {
 	standard: { label: 'Standard', sem: 9, mem: 6, rhyme: 6, rot: 6, taps: [{ n: 10, int: 1000 }] },
 	thorough: {
 		label: 'Thorough',
-		sem: 7,
+		sem: 6,
 		mem: 10,
 		rhyme: 10,
 		rot: 12,
@@ -175,6 +175,14 @@ export function shapeSVG(cells: [number, number][], rotation: number, mirrored: 
 export const PUZZLE_TYPES: PuzzleType[] = ['puzzle-visual', 'puzzle-verbal', 'puzzle-spatial', 'puzzle-kinesthetic'];
 export const PUZZLE_TITLES = ['Visual Memory', 'Phonological Loop', 'Mental Rotation', 'Internal Metronome'];
 
+// The four channel-primary lab tests run inline in the Thorough tier
+const INLINE_LAB: { type: 'lab-vpt' | 'lab-digit' | 'lab-corsi' | 'lab-aniso'; labId: 'vpt' | 'digit' | 'corsi' | 'aniso'; title: string }[] = [
+	{ type: 'lab-vpt', labId: 'vpt', title: 'Pattern Span' },
+	{ type: 'lab-digit', labId: 'digit', title: 'Digit Span' },
+	{ type: 'lab-corsi', labId: 'corsi', title: 'Corsi Blocks' },
+	{ type: 'lab-aniso', labId: 'aniso', title: 'Steady Beat' }
+];
+
 export function buildQuestions(tierName: TierName): Question[] {
 	const qs: Question[] = [];
 	DIMS.forEach((_d, i) => {
@@ -191,6 +199,10 @@ export function buildQuestions(tierName: TierName): Question[] {
 			text: items.length > 1 ? 'How much do you agree with each statement?' : items[0].text
 		});
 		qs.push({ dim: i, role: 'puzzle', type: PUZZLE_TYPES[i], title: PUZZLE_TITLES[i] });
+		if (tierName === 'thorough') {
+			const lab = INLINE_LAB[i];
+			qs.push({ dim: i, role: 'labtest', type: lab.type, title: lab.title, labId: lab.labId });
+		}
 	});
 	return qs;
 }

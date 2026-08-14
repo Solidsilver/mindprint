@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DIMS, TIER_INFO } from '$lib/quiz/questions';
 	import { generateProfile, buildAnchors, headlineFinding } from '$lib/quiz/profile';
+	import { LAB_TESTS, labValueFromZ } from '$lib/quiz/lab';
 	import { kinBand } from '$lib/quiz/scoring';
 	import { browser } from '$app/environment';
 	import Radar from './Radar.svelte';
@@ -111,6 +112,10 @@
 		rows.push({ dim: 3, label: 'Internal metronome', status: kin });
 		return rows;
 	});
+
+	const labRows = $derived(
+		LAB_TESTS.map((t) => ({ meta: t, value: labValueFromZ(z, t.id) })).filter((r) => r.value !== null)
+	);
 </script>
 
 <div class="text-center mb-6">
@@ -240,6 +245,25 @@
 		Raw counts shown; channel scores use guessing-corrected accuracy (getting half right on a yes/no test is chance, not skill).
 	</p>
 </div>
+
+{#if labRows.length}
+	<div class="surface p-6 rounded-2xl mb-8 border hairline">
+		<h4 class="text-xs font-bold tracking-[0.2em] t-ink3 uppercase mb-4 text-center">Lab results</h4>
+		<div class="space-y-3">
+			{#each labRows as row, idx}
+				<div class="text-sm {idx < labRows.length - 1 ? 'border-b hairline pb-3' : ''}">
+					<div class="flex justify-between items-center gap-3">
+						<span class="t-ink2 font-medium flex items-center gap-2">
+							<span style="color: var(--dim-{row.meta.dim})">{@html DIMS[row.meta.dim].glyph}</span>{row.meta.name}
+						</span>
+						<span class="font-semibold tabular-nums t-accent whitespace-nowrap">{row.value}</span>
+					</div>
+					<p class="text-[11px] t-ink3 mt-1">{row.meta.norm} <span class="italic">({row.meta.citation})</span></p>
+				</div>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 {#if !viewingShared && history.length >= 2}
 	<div class="surface p-6 rounded-2xl mb-8 border hairline">

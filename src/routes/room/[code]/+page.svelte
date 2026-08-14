@@ -87,6 +87,12 @@
 		by('Finest inner ear', '🎧', withZ(1).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r), (x) => `${x.v} correct`);
 		by("Most vivid mind's eye", '🌈', withZ(5).sort((a, b) => num(b.v) - num(a.v)), (x) => `≈${x.v}/80 VVIQ`);
 		by('Busiest inner voice', '💬', members.map((m) => ({ m, v: m.u[1] })).sort((a, b) => num(b.v) - num(a.v)), (x) => `usage ${x.v}`);
+		// Lab records (z slots 8-14)
+		by('Longest pattern span', '🧩', withZ(8).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
+		by('Deepest digit span', '🔢', withZ(9).sort((a, b) => num(b.v) - num(a.v)), (x) => `${x.v} forward`);
+		by('Corsi champion', '🟦', withZ(11).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
+		by('Sharpest ear', '👂', withZ(12).sort((a, b) => num(a.v) - num(b.v)), (x) => `±${x.v}% of the beat`);
+		by('Biggest visual buffer', '🧠', withZ(13).sort((a, b) => num(b.v) - num(a.v)), (x) => `K ≈ ${x.v}`);
 		return boards;
 	});
 </script>

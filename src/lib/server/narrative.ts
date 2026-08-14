@@ -61,6 +61,17 @@ export function bandProfile(profile: Profile): { sig: string; bands: Band[]; fla
 		const [c, n] = z[2].split('/').map(Number);
 		if (n >= 6 && c === n && rotRT !== null && rotRT < 3000) flags.push('rotation-fast-perfect');
 	}
+	// Lab-test extremes (z slots 8-14)
+	const vpt = zNum(z[8]);
+	const digitF = zNum(z[9]);
+	const corsi = zNum(z[11]);
+	const anisoThr = zNum(z[12]);
+	const k = zNum(z[13]);
+	if (vpt !== null && vpt >= 12) flags.push('pattern-span-high');
+	if (digitF !== null && digitF >= 8) flags.push('digit-span-high');
+	if (corsi !== null && corsi >= 8) flags.push('corsi-span-high');
+	if (anisoThr !== null && anisoThr <= 3.5) flags.push('timing-threshold-sharp');
+	if (k !== null && k >= 3.2) flags.push('visual-wm-k-high');
 	if (profile.a[0] < 35 && profile.a[2] > 65) flags.push('dissociation-dim-pictures-sharp-maps');
 	if (profile.a[2] < 35 && profile.a[0] > 65) flags.push('dissociation-vivid-pictures-weak-maps');
 	if (profile.u[1] >= 90) flags.push('inner-speech-near-constant');
@@ -95,6 +106,13 @@ KINESTHETIC (the felt body)
 - Motor/kinesthetic imagery is its own channel (MIQ/KVIQ); mental rehearsal of movement measurably improves physical skills.
 - Tapping norms: typical adults drift ~30-60ms per beat at 1/sec; trained musicians ~20-30ms. Nearly everyone taps 20-80ms EARLY without noticing (negative mean asynchrony) — rushing the beat is human, not a flaw.
 - High kinesthetic: thinks while moving, gestures as part of thought, learns by doing; walking meetings help. Low: prefers watching/reading over physical demonstration.
+
+LAB MEASURES (only mention when a flag references them)
+- Pattern span (Visual Patterns Test): adults ~9 filled cells; 12+ is exceptional visual short-term memory.
+- Digit span: adults ~6.5 forward; 8+ forward is a genuinely deep phonological loop.
+- Corsi block span: adults ~6.2; 8+ is exceptional spatial-sequential memory.
+- Anisochrony threshold: non-musicians ~5-10% of the beat; <=3.5% is musician-grade temporal acuity.
+- Visual working-memory capacity K: typical ~2.1; >=3.2 is a roomy visual buffer. IMPORTANT: K is working memory, NOT imagery vividness — aphantasics score normally on it.
 
 ORTHOGRAPHIC IMAGERY (bonus)
 - Seeing written words while listening/thinking is the rarest, most variable mode the IRQ measures. Genuinely uncommon; often useful for spelling and names.

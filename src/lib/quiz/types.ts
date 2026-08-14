@@ -36,11 +36,30 @@ export interface LikertItem {
 
 export type PuzzleType = 'puzzle-visual' | 'puzzle-verbal' | 'puzzle-spatial' | 'puzzle-kinesthetic';
 
+// --- Lab tests (standalone mini-tests; four also run inline in the Thorough tier) ---
+export type LabTestId = 'vpt' | 'digit' | 'corsi' | 'aniso' | 'cdk' | 'pse';
+
+export interface LabResult {
+	id: LabTestId;
+	/** 0-100 norm-scaled score (50 = published adult mean, ±15 per SD) */
+	score: number;
+	/** primary raw value (span, threshold %, K, …) */
+	value: number;
+	/** secondary raw value where applicable (backward span, distinct-list %, …) */
+	value2?: number | null;
+	display: string;
+	strategy?: string | null;
+	d: string;
+}
+
+export type LabQuestionType = 'lab-vpt' | 'lab-digit' | 'lab-corsi' | 'lab-aniso';
+
 export type Question =
 	| { dim: number; role: 'plane'; type: '2d-plane'; text: string; subtext: string }
 	| { dim: number; role: 'likert'; type: 'likert-batch'; text: string; items: LikertItem[] }
 	| { dim: number; role: 'vviq'; type: 'vviq'; title: string }
-	| { dim: number; role: 'puzzle'; type: PuzzleType; title: string };
+	| { dim: number; role: 'puzzle'; type: PuzzleType; title: string }
+	| { dim: number; role: 'labtest'; type: LabQuestionType; title: string; labId: LabTestId };
 
 // --- Answers ---
 export interface PlaneAnswer {
@@ -73,10 +92,15 @@ export interface KinAnswer {
 	intervals: number[];
 	blocks: KinBlockResult[];
 }
-export type AnswerValue = PlaneAnswer | LikertAnswer | VviqAnswer | PuzzleAnswer | KinAnswer;
+export type AnswerValue = PlaneAnswer | LikertAnswer | VviqAnswer | PuzzleAnswer | KinAnswer | LabResult;
 export type Answer = AnswerValue | 'N/A' | null;
 
-/** [memDetail, rhymeDetail, rotDetail, kinErrMs, kinSignedMs, vviq16, ortho, rotMedRTms] */
+/**
+ * Objective-result summary carried in profiles/share links/rooms.
+ * 0: memDetail · 1: rhymeDetail · 2: rotDetail · 3: kinErrMs · 4: kinSignedMs
+ * 5: vviq16 · 6: ortho · 7: rotMedRTms · 8: VPT span · 9: digit fwd
+ * 10: digit bwd · 11: Corsi span · 12: anisochrony %IOI · 13: K · 14: PSE Δ
+ */
 export type ZSummary = (string | number | null)[];
 
 export interface Sitting {

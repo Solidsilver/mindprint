@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { DIMS, TIER_INFO, buildQuestions } from '$lib/quiz/questions';
 	import { buildSitting } from '$lib/quiz/scoring';
-	import { loadHistory, saveHistory, clearHistoryStorage, getName, setName, getRoom, setRoom, profileFromHistory } from '$lib/quiz/storage';
+	import { LAB_TESTS, LAB_BY_ID } from '$lib/quiz/lab';
+	import { loadHistory, saveHistory, clearHistoryStorage, getName, setName, getRoom, setRoom, profileFromHistory, loadLabs, saveLab, type LabStore } from '$lib/quiz/storage';
 	import { showToast } from '$lib/toast.svelte';
 	import Plane from '$lib/components/Plane.svelte';
 	import LikertBatch from '$lib/components/LikertBatch.svelte';
@@ -12,10 +13,28 @@
 	import Metronome from '$lib/components/Metronome.svelte';
 	import ResultsView from '$lib/components/ResultsView.svelte';
 	import ExportButton from '$lib/components/ExportButton.svelte';
+	import VptTest from '$lib/components/lab/VptTest.svelte';
+	import DigitSpanTest from '$lib/components/lab/DigitSpanTest.svelte';
+	import CorsiTest from '$lib/components/lab/CorsiTest.svelte';
+	import AnisochronyTest from '$lib/components/lab/AnisochronyTest.svelte';
+	import ChangeDetectionTest from '$lib/components/lab/ChangeDetectionTest.svelte';
+	import PseTest from '$lib/components/lab/PseTest.svelte';
 	import { onMount } from 'svelte';
-	import type { Answer, Profile, Question, Sitting, TierName } from '$lib/quiz/types';
+	import type { Answer, LabResult, LabTestId, Profile, Question, Sitting, TierName } from '$lib/quiz/types';
 
-	let screen = $state<'intro' | 'quiz' | 'results'>('intro');
+	const LAB_COMPONENTS = {
+		vpt: VptTest,
+		digit: DigitSpanTest,
+		corsi: CorsiTest,
+		aniso: AnisochronyTest,
+		cdk: ChangeDetectionTest,
+		pse: PseTest
+	} as const;
+
+	let screen = $state<'intro' | 'quiz' | 'results' | 'lab'>('intro');
+	let labs = $state<LabStore>({});
+	let activeLab = $state<LabTestId | null>(null);
+	let activeLabDone = $state(false);
 	let tier = $state<TierName>('quick');
 	let questions = $state<Question[]>([]);
 	let current = $state(0);
@@ -33,11 +52,27 @@
 
 	onMount(() => {
 		history = loadHistory();
-		profile = profileFromHistory(history);
+		labs = loadLabs();
+		profile = profileFromHistory(history, undefined, labs);
 		shareName = getName();
 		joinedRoom = getRoom();
 		if (profile) screen = 'results';
 	});
+
+	function recordLab(result: LabResult) {
+		labs = saveLab(result);
+		profile = profileFromHistory(history, shareName, labs);
+	}
+
+	function completeLabRun(result: LabResult) {
+		recordLab(result);
+		activeLabDone = true;
+	}
+
+	function completeInlineLab(result: LabResult) {
+		setAnswer(result);
+		recordLab(result);
+	}
 
 	function start(t: TierName) {
 		tier = t;
@@ -74,7 +109,7 @@
 		history = [...history, sitting];
 		saveHistory(history);
 		skips = history.length === 1 ? sk : [];
-		profile = profileFromHistory(history, shareName);
+		profile = profileFromHistory(history, shareName, labs);
 		screen = 'results';
 	}
 
@@ -204,10 +239,10 @@
 				</button>
 				<button class="tier-card w-full rounded-2xl p-5 sm:flex sm:items-center sm:gap-4" onclick={() => start('thorough')}>
 					<div class="flex-1">
-						<div class="font-bold t-ink">Thorough <span class="t-ink3 font-semibold text-sm">· ~35 min</span></div>
-						<div class="text-sm t-ink2 mt-0.5">A real mini-VVIQ mapped to published norms, 10–12-trial tests with reaction-time scoring, and a two-tempo rhythm battery.</div>
+						<div class="font-bold t-ink">Thorough <span class="t-ink3 font-semibold text-sm">· ~50 min</span></div>
+						<div class="text-sm t-ink2 mt-0.5">Everything in Standard plus a real mini-VVIQ, reaction-time scoring, a two-tempo rhythm battery, and four classic lab tests (digit span, Corsi blocks, pattern span, beat detection).</div>
 					</div>
-					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums mt-2 sm:mt-0">±7 typical error</div>
+					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums mt-2 sm:mt-0">±6 typical error</div>
 				</button>
 			</div>
 
@@ -245,6 +280,13 @@
 						<RotationPuzzle {tier} answer={answers[current]} scratch={scratches[current]} onAnswer={setAnswer} />
 					{:else if q.type === 'puzzle-kinesthetic'}
 						<Metronome {tier} answer={answers[current]} scratch={scratches[current]} onAnswer={setAnswer} />
+					{:else if q.role === 'labtest'}
+						{@const LabComp = LAB_COMPONENTS[q.labId]}
+						{@const prev = answers[current]}
+						<LabComp
+							onComplete={completeInlineLab}
+							existing={prev && typeof prev === 'object' && 'id' in prev ? (prev as LabResult) : null}
+						/>
 					{/if}
 				{/key}
 			</div>
@@ -279,6 +321,11 @@
 							<button onclick={() => postToRoom(false)} class="px-5 py-3 btn-ghost font-semibold rounded-xl text-sm whitespace-nowrap">Join room</button>
 							<button onclick={() => postToRoom(true)} class="px-5 py-3 btn-ghost font-semibold rounded-xl text-sm whitespace-nowrap">Create room</button>
 						</div>
+						<div class="mt-3">
+							<button onclick={() => { activeLab = null; activeLabDone = false; screen = 'lab'; }} class="w-full px-6 py-3 btn-ghost font-semibold rounded-xl text-sm">
+								🧪 Open the Lab — six classic tests, 3–4 min each
+							</button>
+						</div>
 						{#if joinedRoom}
 							<p class="text-sm text-center mt-3">
 								<a href="/room/{joinedRoom}" class="t-accent font-bold underline">View family room {joinedRoom} →</a>
@@ -295,6 +342,68 @@
 					<button onclick={retake} class="flex-1 px-6 py-4 btn-ghost font-semibold rounded-xl">Take it again</button>
 				</div>
 			</ResultsView>
+		</div>
+	{:else if screen === 'lab'}
+		<div class="fade-enter">
+			<div class="text-center mb-6">
+				<h2 class="text-xs font-bold tracking-[0.2em] t-ink3 uppercase mb-3">The Lab</h2>
+				<h3 class="font-display text-3xl font-semibold t-ink">
+					{activeLab ? LAB_BY_ID[activeLab].name : 'Classic tests, one number each'}
+				</h3>
+				{#if !activeLab}
+					<p class="text-sm t-ink2 mt-3 max-w-md mx-auto">
+						Six paradigms straight from the cognitive-psychology literature. Each takes a few minutes, yields a number you
+						can compare to published adult norms, and sharpens your Mindprint.
+					</p>
+				{/if}
+			</div>
+
+			{#if activeLab}
+				{@const ActiveComp = LAB_COMPONENTS[activeLab]}
+				{#key activeLab}
+					<ActiveComp onComplete={completeLabRun} />
+				{/key}
+				<div class="mt-8">
+					{#if activeLabDone}
+						<button onclick={() => { activeLab = null; activeLabDone = false; }} class="w-full px-6 py-4 btn-primary font-semibold rounded-xl">
+							Back to the Lab
+						</button>
+					{:else}
+						<button onclick={() => { activeLab = null; activeLabDone = false; }} class="w-full px-6 py-3 text-sm t-ink3 hover:t-ink2">
+							Cancel — nothing is saved until a test finishes
+						</button>
+					{/if}
+				</div>
+			{:else}
+				<div class="space-y-3 mb-8">
+					{#each LAB_TESTS as t}
+						{@const r = labs[t.id]}
+						<div class="surface-2 border hairline rounded-2xl p-4 sm:flex sm:items-center sm:gap-4">
+							<div class="flex-1 min-w-0">
+								<div class="flex items-center gap-2 flex-wrap">
+									<span class="font-bold t-ink">{t.name}</span>
+									<span class="text-xs t-ink3">· {t.minutes} ·</span>
+									<span class="text-xs font-bold uppercase tracking-wider" style="color: var(--dim-{t.dim})">{DIMS[t.dim].key}</span>
+								</div>
+								<p class="text-sm t-ink2 mt-1">{t.blurb}</p>
+								<p class="text-[11px] t-ink3 mt-1 italic">{t.citation}</p>
+								{#if r}
+									<p class="text-sm font-semibold t-accent mt-1 tabular-nums">Your result: {r.display} <span class="t-ink3 font-normal">({r.d})</span></p>
+								{/if}
+							</div>
+							<button
+								onclick={() => { activeLab = t.id; activeLabDone = false; }}
+								class="mt-3 sm:mt-0 px-6 py-3 {r ? 'btn-ghost' : 'btn-primary'} font-semibold rounded-xl text-sm whitespace-nowrap"
+							>
+								{r ? 'Run again' : 'Run test'}
+							</button>
+						</div>
+					{/each}
+				</div>
+				<button onclick={() => (screen = profile ? 'results' : 'intro')} class="w-full px-6 py-4 btn-ghost font-semibold rounded-xl">
+					← Back to {profile ? 'results' : 'start'}
+				</button>
+			{/if}
 		</div>
 	{/if}
 </div>

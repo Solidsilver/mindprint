@@ -1,7 +1,10 @@
 import { TIER_INFO } from './questions';
+import { labsIntoZ } from './lab';
 import type {
 	Answer,
 	KinAnswer,
+	LabResult,
+	LabTestId,
 	LikertAnswer,
 	PlaneAnswer,
 	PuzzleAnswer,
@@ -93,6 +96,10 @@ export function calcDim(questions: Question[], answers: Answer[], dimIdx: number
 		} else if (q.role === 'puzzle') {
 			const a = ans as PuzzleAnswer;
 			for (let k = 0; k < puzzleWeight(tier); k++) abilityScores.push(a.score);
+		} else if (q.role === 'labtest' && 'score' in ans) {
+			// norm-scaled lab score, weighted like a heavy objective test
+			const a = ans as LabResult;
+			for (let k = 0; k < 3; k++) abilityScores.push(a.score);
 		}
 	});
 	const avg = (arr: number[]): number | null => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
@@ -128,7 +135,7 @@ export function puzzleSummary(questions: Question[], answers: Answer[]): ZSummar
 		});
 	});
 	const rotAns = isVal(rot) && typeof rot === 'object' ? (rot as PuzzleAnswer) : null;
-	return [
+	const base: ZSummary = [
 		det(mem),
 		det(rhy),
 		det(rot),
@@ -138,6 +145,15 @@ export function puzzleSummary(questions: Question[], answers: Answer[]): ZSummar
 		ortho,
 		rotAns && rotAns.medRT ? Math.round(rotAns.medRT) : null
 	];
+	// inline lab tests (Thorough tier) write their z slots too
+	const labs: Partial<Record<LabTestId, LabResult>> = {};
+	questions.forEach((q, qi) => {
+		const ans = answers[qi];
+		if (q.role === 'labtest' && ans !== null && typeof ans === 'object' && 'id' in ans) {
+			labs[(ans as LabResult).id] = ans as LabResult;
+		}
+	});
+	return labsIntoZ(base, labs);
 }
 
 export function buildSitting(
