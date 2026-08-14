@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { TIER_INFO } from '$lib/quiz/questions';
 	import { kinBand, kinScore } from '$lib/quiz/scoring';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import type { Answer, KinAnswer, TierName } from '$lib/quiz/types';
 
 	interface BlockResult {
@@ -19,11 +19,11 @@
 	}
 	let { tier, answer = null, scratch, onAnswer }: Props = $props();
 
-	const blocks = TIER_INFO[tier].taps;
-	if (!scratch.blockResults) scratch.blockResults = [];
-	const blockResults = scratch.blockResults;
+	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
+	const blocks = untrack(() => TIER_INFO[tier].taps);
+	const blockResults = untrack(() => (scratch.blockResults ??= []));
 
-	let done = $state(Boolean(answer && answer !== 'N/A'));
+	let done = $state(untrack(() => Boolean(answer && answer !== 'N/A')));
 	let blockIdx = $state(blockResults.length);
 	let phase = $state<'ready' | 'pacing' | 'tapping'>('ready');
 	let tapsLeft = $state(0);

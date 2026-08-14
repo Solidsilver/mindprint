@@ -4,7 +4,7 @@
 	// in one of them the 4th tone comes early. A 2-down-1-up staircase converges
 	// on the ~70.7% threshold, reported as % of the beat interval.
 	// Non-musicians typically land ~5-10%; lab JNDs run ~3.5%.
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -14,10 +14,10 @@
 	const START_DELTA = 120, MIN_DELTA = 6, MAX_DELTA = 180;
 	const MAX_TRIALS = 24, TARGET_REVERSALS = 8;
 
-	let phase = $state<'intro' | 'playing' | 'respond' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'playing' | 'respond' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let trial = $state(0);
 	let playingSeq = $state(0); // 1 or 2 while audible
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 
 	let delta = START_DELTA;
 	let correctStreak = 0;

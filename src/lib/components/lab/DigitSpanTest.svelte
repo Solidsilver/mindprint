@@ -2,7 +2,7 @@
 	// Digit span, WAIS tradition: digits at 1/second, repeat them back; forward
 	// block then backward block. Adaptive short form (pass advances immediately,
 	// two misses at a length end the block). Norms: forward ~6.5, backward ~4.8.
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -10,7 +10,7 @@
 
 	const START = 3, CAP = 9;
 
-	let phase = $state<'intro' | 'show' | 'recall' | 'between' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'show' | 'recall' | 'between' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let block = $state<'forward' | 'backward'>('forward');
 	let level = $state(START);
 	let attempt = $state(1);
@@ -18,7 +18,7 @@
 	let shownDigit = $state<number | null>(null);
 	let entry = $state('');
 	let spans = $state<{ forward: number; backward: number }>({ forward: 0, backward: 0 });
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 	let timers: ReturnType<typeof setTimeout>[] = [];
 	const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
 	onDestroy(() => timers.forEach(clearTimeout));

@@ -2,7 +2,7 @@
 	// Corsi block-tapping (Corsi 1972; Kessels et al. 2000): nine irregularly
 	// placed blocks light up in sequence at ~1/second; tap them back in order.
 	// Adaptive short form; span norm 6.2 (SD 1.3).
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { sample, localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -15,13 +15,13 @@
 	];
 	const START = 3, CAP = 9, LIT_MS = 600, GAP_MS = 350;
 
-	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let level = $state(START);
 	let attempt = $state(1);
 	let seq: number[] = [];
 	let lit = $state<number | null>(null);
 	let taps = $state<number[]>([]);
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 	let timers: ReturnType<typeof setTimeout>[] = [];
 	const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
 	onDestroy(() => timers.forEach(clearTimeout));

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { Answer, LikertAnswer, LikertItem } from '$lib/quiz/types';
 
 	interface Props {
@@ -11,10 +12,13 @@
 	const LIKERT_LABELS = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
 	const LIKERT_VALUES = [0, 25, 50, 75, 100];
 
+	// seeded from the answer's initial value; later updates flow the other way (untrack = intentional)
 	let values = $state<(number | null)[]>(
-		answer && typeof answer === 'object' && 'values' in answer
-			? answer.values.slice()
-			: new Array(q.items.length).fill(null)
+		untrack(() =>
+			answer && typeof answer === 'object' && 'values' in answer
+				? answer.values.slice()
+				: new Array(q.items.length).fill(null)
+		)
 	);
 
 	function pick(i: number, v: number) {

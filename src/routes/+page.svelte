@@ -40,9 +40,10 @@
 	let questions = $state<Question[]>([]);
 	let current = $state(0);
 	let answers = $state<Answer[]>([]);
-	// per-question mutable scratch owned by the puzzle components (trials, progress)
+	// per-question mutable scratch owned by the puzzle components (trials, progress);
+	// raw: the inner objects are deliberately non-reactive, only reassignment matters
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let scratches: any[] = [];
+	let scratches = $state.raw<any[]>([]);
 	let history = $state<Sitting[]>([]);
 	let profile = $state<Profile | null>(null);
 	let skips = $state<boolean[]>([]);

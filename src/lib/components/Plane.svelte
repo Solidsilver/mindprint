@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { Answer, PlaneAnswer } from '$lib/quiz/types';
 
 	interface Props {
@@ -10,10 +11,13 @@
 
 	let container = $state<HTMLDivElement | null>(null);
 	let isDragging = false;
+	// seeded from the answer's initial value; later updates flow the other way (untrack = intentional)
 	let pos = $state<PlaneAnswer | null>(
-		answer && typeof answer === 'object' && 'capacity' in answer
-			? { capacity: answer.capacity, usage: answer.usage }
-			: null
+		untrack(() =>
+			answer && typeof answer === 'object' && 'capacity' in answer
+				? { capacity: answer.capacity, usage: answer.usage }
+				: null
+		)
 	);
 
 	function set(capacity: number, usage: number) {

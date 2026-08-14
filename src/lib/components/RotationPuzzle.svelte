@@ -18,8 +18,9 @@
 		onAnswer: (a: PuzzleAnswer) => void;
 	}
 	let { tier, answer = null, scratch, onAnswer }: Props = $props();
+	import { untrack } from 'svelte';
 
-	const nTrials = TIER_INFO[tier].rot;
+	const nTrials = untrack(() => TIER_INFO[tier].rot);
 
 	function makeTrial(shape: MRShape): Trial {
 		const correctRot = [90, 180, 270][Math.floor(Math.random() * 3)];
@@ -31,22 +32,27 @@
 		return { shape, options };
 	}
 
-	if (!scratch.trials) {
-		const easy = shuffle(MR_SHAPES.filter((s) => !s.hard));
-		const hard = shuffle(MR_SHAPES.filter((s) => s.hard));
-		let pool: MRShape[];
-		if (tier === 'quick') pool = easy.slice(0, 2);
-		else if (tier === 'standard') pool = shuffle([...easy, ...hard]).slice(0, 6);
-		else pool = shuffle([...easy, ...hard, ...easy, ...hard]).slice(0, 12);
-		scratch.trials = pool.map(makeTrial);
-		scratch.results = [];
-		scratch.rts = [];
-	}
-	const trials = scratch.trials;
-	const results = scratch.results ?? (scratch.results = []);
-	const rts = scratch.rts ?? (scratch.rts = []);
+	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
+	const { trials, results, rts } = untrack(() => {
+		if (!scratch.trials) {
+			const easy = shuffle(MR_SHAPES.filter((s) => !s.hard));
+			const hard = shuffle(MR_SHAPES.filter((s) => s.hard));
+			let pool: MRShape[];
+			if (tier === 'quick') pool = easy.slice(0, 2);
+			else if (tier === 'standard') pool = shuffle([...easy, ...hard]).slice(0, 6);
+			else pool = shuffle([...easy, ...hard, ...easy, ...hard]).slice(0, 12);
+			scratch.trials = pool.map(makeTrial);
+			scratch.results = [];
+			scratch.rts = [];
+		}
+		return {
+			trials: scratch.trials,
+			results: scratch.results ?? (scratch.results = []),
+			rts: scratch.rts ?? (scratch.rts = [])
+		};
+	});
 
-	let done = $state(Boolean(answer && answer !== 'N/A'));
+	let done = $state(untrack(() => Boolean(answer && answer !== 'N/A')));
 	let trialIdx = $state(results.length);
 	const trial = $derived(trials[Math.min(trialIdx, nTrials - 1)]);
 	let shownAt = performance.now();

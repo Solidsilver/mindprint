@@ -8,10 +8,11 @@
 		onAnswer: (a: VviqAnswer) => void;
 	}
 	let { answer = null, scratch, onAnswer }: Props = $props();
+	import { untrack } from 'svelte';
 
-	if (!scratch.ratings) scratch.ratings = [];
-	const ratings = scratch.ratings;
-	let done = $state(Boolean(answer && answer !== 'N/A'));
+	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
+	const ratings = untrack(() => (scratch.ratings ??= []));
+	let done = $state(untrack(() => Boolean(answer && answer !== 'N/A')));
 	let idx = $state(ratings.length);
 
 	function pick(rating: number) {

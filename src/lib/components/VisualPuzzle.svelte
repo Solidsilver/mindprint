@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { TIER_INFO } from '$lib/quiz/questions';
 	import { shuffle, sample, chanceCorrect } from '$lib/quiz/scoring';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import type { Answer, PuzzleAnswer, TierName } from '$lib/quiz/types';
 
 	interface Trial {
@@ -21,7 +21,7 @@
 	let { tier, answer = null, scratch, onAnswer }: Props = $props();
 
 	const VP_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#92400e'];
-	const nTrials = TIER_INFO[tier].mem;
+	const nTrials = untrack(() => TIER_INFO[tier].mem);
 
 	function makeTrial(ti: number): Trial {
 		const size = ti >= 3 && tier !== 'quick' ? 4 : 3;
@@ -38,14 +38,16 @@
 		return { size, grid, targetIndex, targetColor, opts, showMs: size === 4 ? 2500 : 2000 };
 	}
 
-	if (!scratch.trials) {
-		scratch.trials = Array.from({ length: nTrials }, (_, i) => makeTrial(i));
-		scratch.results = [];
-	}
-	const trials = scratch.trials;
-	const results = scratch.results ?? (scratch.results = []);
+	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
+	const { trials, results } = untrack(() => {
+		if (!scratch.trials) {
+			scratch.trials = Array.from({ length: nTrials }, (_, i) => makeTrial(i));
+			scratch.results = [];
+		}
+		return { trials: scratch.trials, results: scratch.results ?? (scratch.results = []) };
+	});
 
-	let done = $state(Boolean(answer && answer !== 'N/A'));
+	let done = $state(untrack(() => Boolean(answer && answer !== 'N/A')));
 	let trialIdx = $state(results.length);
 	let phase = $state<'ready' | 'showing' | 'asking'>('ready');
 	let timer: ReturnType<typeof setTimeout> | undefined;

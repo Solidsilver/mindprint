@@ -3,7 +3,7 @@
 	// cells filled appears for 3 s; reproduce it. Adaptive short form: pass the
 	// first trial of a level to advance; a second trial only on a miss;
 	// two misses end the test. Span = highest level passed (norm: ~9, SD 2.2).
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { sample, localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -16,12 +16,12 @@
 	};
 	const START = 3, CAP = 13, SHOW_MS = 3000;
 
-	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let level = $state(START);
 	let attempt = $state(1); // 1 or 2 at current level
 	let grid = $state<{ rows: number; cols: number; filled: Set<number> }>({ rows: 2, cols: 3, filled: new Set() });
 	let picked = $state<Set<number>>(new Set());
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	onDestroy(() => clearTimeout(timer));
 
@@ -101,6 +101,7 @@
 					<button
 						class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg border transition-colors {picked.has(i) ? 'hairline-2' : 'hairline'}"
 						style="background-color: {picked.has(i) ? 'var(--accent)' : 'var(--card-2)'};"
+						aria-label="cell {i + 1}"
 						aria-pressed={picked.has(i)}
 						onclick={() => toggle(i)}
 					></button>

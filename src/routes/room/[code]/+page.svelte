@@ -5,15 +5,16 @@
 	import { kinBand } from '$lib/quiz/scoring';
 	import { getName } from '$lib/quiz/storage';
 	import { showToast } from '$lib/toast.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { Drum, Rotate3d, Camera, Headphones, Sparkles, MessageCircle, Puzzle, Hash, LayoutGrid, Ear, Brain } from '@lucide/svelte';
 	import type { RoomMember } from '$lib/quiz/types';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let members = $state<RoomMember[]>(data.members);
-	let selected = $state<string[]>(data.members.slice(0, 4).map((m) => m.n));
+	// seeded from the server load; refresh() takes over afterwards (untrack = intentional)
+	let members = $state<RoomMember[]>(untrack(() => data.members));
+	let selected = $state<string[]>(untrack(() => data.members.slice(0, 4).map((m) => m.n)));
 	let myName = $state('');
 
 	onMount(() => {

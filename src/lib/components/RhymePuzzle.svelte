@@ -14,21 +14,24 @@
 		onAnswer: (a: PuzzleAnswer) => void;
 	}
 	let { tier, answer = null, scratch, onAnswer }: Props = $props();
+	import { untrack } from 'svelte';
 
-	const nTrials = TIER_INFO[tier].rhyme;
+	const nTrials = untrack(() => TIER_INFO[tier].rhyme);
 
-	if (!scratch.trials) {
-		const nRhyme = Math.ceil(nTrials / 2);
-		scratch.trials = shuffle<Trial>([
-			...sample(RHYME_PAIRS.rhyming, nRhyme).map((pair) => ({ pair, answer: true })),
-			...sample(RHYME_PAIRS.nonRhyming, nTrials - nRhyme).map((pair) => ({ pair, answer: false }))
-		]);
-		scratch.results = [];
-	}
-	const trials = scratch.trials;
-	const results = scratch.results ?? (scratch.results = []);
+	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
+	const { trials, results } = untrack(() => {
+		if (!scratch.trials) {
+			const nRhyme = Math.ceil(nTrials / 2);
+			scratch.trials = shuffle<Trial>([
+				...sample(RHYME_PAIRS.rhyming, nRhyme).map((pair) => ({ pair, answer: true })),
+				...sample(RHYME_PAIRS.nonRhyming, nTrials - nRhyme).map((pair) => ({ pair, answer: false }))
+			]);
+			scratch.results = [];
+		}
+		return { trials: scratch.trials, results: scratch.results ?? (scratch.results = []) };
+	});
 
-	let done = $state(Boolean(answer && answer !== 'N/A'));
+	let done = $state(untrack(() => Boolean(answer && answer !== 'N/A')));
 	let trialIdx = $state(results.length);
 	const trial = $derived(trials[Math.min(trialIdx, nTrials - 1)]);
 

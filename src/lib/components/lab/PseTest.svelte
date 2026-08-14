@@ -4,7 +4,7 @@
 	// (F H K L R Q). The rhyming set is famously harder — live proof that the
 	// inner voice does the remembering. The delta is a demo, not a stable score;
 	// the channel contribution uses overall recall of the distinct lists.
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { shuffle, sample, localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -23,14 +23,14 @@
 		...Array.from({ length: LISTS_PER_COND }, () => ({ cond: 'dissimilar' as const, letters: shuffle(DISSIMILAR) }))
 	]);
 
-	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'show' | 'recall' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let idx = $state(0);
 	let shownLetter = $state<string | null>(null);
 	let entry = $state('');
 	let correct = { similar: 0, dissimilar: 0 };
 	let simPct = $state(0);
 	let disPct = $state(0);
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 	let timers: ReturnType<typeof setTimeout>[] = [];
 	const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
 	onDestroy(() => timers.forEach(clearTimeout));

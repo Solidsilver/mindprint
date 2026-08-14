@@ -5,7 +5,7 @@
 	// over set sizes 4 and 6. Typical adult K ≈ 2.1 (SD 0.8); classic ~3-4.
 	// Honesty note: K measures visual working memory, NOT imagery vividness —
 	// aphantasics score normally on it. A strategy probe is asked at the end.
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { shuffle, sample, localDate } from '$lib/quiz/scoring';
 	import { normScore, type LabResult } from '$lib/quiz/lab';
 
@@ -42,14 +42,14 @@
 		...Array.from({ length: N_TRIALS / 2 }, () => makeTrial(6))
 	]);
 
-	let phase = $state<'intro' | 'fixate' | 'show' | 'blank' | 'probe' | 'strategy' | 'done'>(existing ? 'done' : 'intro');
+	let phase = $state<'intro' | 'fixate' | 'show' | 'blank' | 'probe' | 'strategy' | 'done'>(untrack(() => (existing ? 'done' : 'intro')));
 	let idx = $state(0);
 	let stats = { 4: { hit: 0, changeN: 0, fa: 0, sameN: 0 }, 6: { hit: 0, changeN: 0, fa: 0, sameN: 0 } } as Record<
 		number,
 		{ hit: number; changeN: number; fa: number; sameN: number }
 	>;
 	let kValue = $state(0);
-	let result = $state<LabResult | null>(existing);
+	let result = $state<LabResult | null>(untrack(() => existing));
 	let timers: ReturnType<typeof setTimeout>[] = [];
 	const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
 	onDestroy(() => timers.forEach(clearTimeout));
