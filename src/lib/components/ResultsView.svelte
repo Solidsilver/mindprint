@@ -6,6 +6,7 @@
 	import { browser } from '$app/environment';
 	import Radar from './Radar.svelte';
 	import BandStrip from './BandStrip.svelte';
+	import { Sparkles } from '@lucide/svelte';
 	import type { Narrative, Profile, Sitting, Tone } from '$lib/quiz/types';
 	import type { Snippet } from 'svelte';
 
@@ -142,7 +143,7 @@
 <div class="surface-2 p-6 rounded-2xl mb-8 border hairline">
 	<p id="profile-desc" class="t-ink2 text-[15px] leading-relaxed">{narrative?.description || titleDesc.desc}</p>
 	{#if narrativeState === 'loading'}
-		<p class="text-xs t-ink3 mt-3 animate-pulse">✨ Drafting this mind's narrative…</p>
+		<p class="text-xs t-ink3 mt-3 animate-pulse inline-flex items-center gap-1.5"><Sparkles size={13} /> Drafting this mind's narrative…</p>
 	{/if}
 </div>
 

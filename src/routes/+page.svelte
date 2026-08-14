@@ -20,6 +20,7 @@
 	import ChangeDetectionTest from '$lib/components/lab/ChangeDetectionTest.svelte';
 	import PseTest from '$lib/components/lab/PseTest.svelte';
 	import { onMount } from 'svelte';
+	import { FlaskConical } from '@lucide/svelte';
 	import type { Answer, LabResult, LabTestId, Profile, Question, Sitting, TierName } from '$lib/quiz/types';
 
 	const LAB_COMPONENTS = {
@@ -322,8 +323,8 @@
 							<button onclick={() => postToRoom(true)} class="px-5 py-3 btn-ghost font-semibold rounded-xl text-sm whitespace-nowrap">Create room</button>
 						</div>
 						<div class="mt-3">
-							<button onclick={() => { activeLab = null; activeLabDone = false; screen = 'lab'; }} class="w-full px-6 py-3 btn-ghost font-semibold rounded-xl text-sm">
-								🧪 Open the Lab — six classic tests, 3–4 min each
+							<button onclick={() => { activeLab = null; activeLabDone = false; screen = 'lab'; }} class="w-full px-6 py-3 btn-ghost font-semibold rounded-xl text-sm inline-flex items-center justify-center gap-2">
+								<FlaskConical size={16} /> Open the Lab — six classic tests, 3–4 min each
 							</button>
 						</div>
 						{#if joinedRoom}

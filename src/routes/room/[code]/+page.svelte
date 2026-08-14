@@ -6,6 +6,7 @@
 	import { getName } from '$lib/quiz/storage';
 	import { showToast } from '$lib/toast.svelte';
 	import { onMount } from 'svelte';
+	import { Drum, Rotate3d, Camera, Headphones, Sparkles, MessageCircle, Puzzle, Hash, LayoutGrid, Ear, Brain } from '@lucide/svelte';
 	import type { RoomMember } from '$lib/quiz/types';
 	import type { PageData } from './$types';
 
@@ -60,7 +61,7 @@
 
 	interface Board {
 		label: string;
-		emoji: string;
+		icon: typeof Drum;
 		name: string;
 		value: string;
 	}
@@ -71,8 +72,8 @@
 	}
 	const leaderboards = $derived.by(() => {
 		const boards: Board[] = [];
-		const by = (label: string, emoji: string, candidates: Cand[], fmt: (c: Cand) => string) => {
-			if (candidates.length) boards.push({ label, emoji, name: candidates[0].m.n, value: fmt(candidates[0]) });
+		const by = (label: string, icon: typeof Drum, candidates: Cand[], fmt: (c: Cand) => string) => {
+			if (candidates.length) boards.push({ label, icon, name: candidates[0].m.n, value: fmt(candidates[0]) });
 		};
 		const withZ = (i: number): Cand[] =>
 			members
@@ -81,18 +82,18 @@
 		const num = (v: string | number) => (typeof v === 'number' ? v : 0);
 		const rtOf = (m: RoomMember) => (typeof m.z?.[7] === 'number' ? (m.z[7] as number) : 1e9);
 
-		by('Tightest metronome', '🥁', withZ(3).sort((a, b) => num(a.v) - num(b.v)), (x) => `±${x.v}ms (${kinBand(num(x.v)).label})`);
-		by('Sharpest mental rotation', '🧊', withZ(2).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r || rtOf(a.m) - rtOf(b.m)), (x) => `${x.v} correct`);
-		by('Best flash memory', '📸', withZ(0).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r), (x) => `${x.v} correct`);
-		by('Finest inner ear', '🎧', withZ(1).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r), (x) => `${x.v} correct`);
-		by("Most vivid mind's eye", '🌈', withZ(5).sort((a, b) => num(b.v) - num(a.v)), (x) => `≈${x.v}/80 VVIQ`);
-		by('Busiest inner voice', '💬', members.map((m) => ({ m, v: m.u[1] })).sort((a, b) => num(b.v) - num(a.v)), (x) => `usage ${x.v}`);
+		by('Tightest metronome', Drum, withZ(3).sort((a, b) => num(a.v) - num(b.v)), (x) => `±${x.v}ms (${kinBand(num(x.v)).label})`);
+		by('Sharpest mental rotation', Rotate3d, withZ(2).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r || rtOf(a.m) - rtOf(b.m)), (x) => `${x.v} correct`);
+		by('Best flash memory', Camera, withZ(0).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r), (x) => `${x.v} correct`);
+		by('Finest inner ear', Headphones, withZ(1).map((x) => ({ ...x, r: ratio(x.v) })).filter((x): x is Cand & { r: number } => x.r !== null).sort((a, b) => b.r - a.r), (x) => `${x.v} correct`);
+		by("Most vivid mind's eye", Sparkles, withZ(5).sort((a, b) => num(b.v) - num(a.v)), (x) => `≈${x.v}/80 VVIQ`);
+		by('Busiest inner voice', MessageCircle, members.map((m) => ({ m, v: m.u[1] })).sort((a, b) => num(b.v) - num(a.v)), (x) => `usage ${x.v}`);
 		// Lab records (z slots 8-14)
-		by('Longest pattern span', '🧩', withZ(8).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
-		by('Deepest digit span', '🔢', withZ(9).sort((a, b) => num(b.v) - num(a.v)), (x) => `${x.v} forward`);
-		by('Corsi champion', '🟦', withZ(11).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
-		by('Sharpest ear', '👂', withZ(12).sort((a, b) => num(a.v) - num(b.v)), (x) => `±${x.v}% of the beat`);
-		by('Biggest visual buffer', '🧠', withZ(13).sort((a, b) => num(b.v) - num(a.v)), (x) => `K ≈ ${x.v}`);
+		by('Longest pattern span', Puzzle, withZ(8).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
+		by('Deepest digit span', Hash, withZ(9).sort((a, b) => num(b.v) - num(a.v)), (x) => `${x.v} forward`);
+		by('Corsi champion', LayoutGrid, withZ(11).sort((a, b) => num(b.v) - num(a.v)), (x) => `span ${x.v}`);
+		by('Sharpest ear', Ear, withZ(12).sort((a, b) => num(a.v) - num(b.v)), (x) => `±${x.v}% of the beat`);
+		by('Biggest visual buffer', Brain, withZ(13).sort((a, b) => num(b.v) - num(a.v)), (x) => `K ≈ ${x.v}`);
 		return boards;
 	});
 </script>
@@ -188,7 +189,9 @@
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
 				{#each leaderboards as b}
 					<div class="surface-2 border hairline rounded-2xl p-4 flex items-center gap-3">
-						<div class="text-2xl">{b.emoji}</div>
+						<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: var(--accent-soft); color: var(--accent);">
+							<b.icon size={20} strokeWidth={2} />
+						</div>
 						<div class="min-w-0">
 							<div class="text-xs font-bold uppercase tracking-widest t-ink3">{b.label}</div>
 							<div class="text-sm t-ink"><strong>{b.name}</strong> · <span class="tabular-nums t-ink2">{b.value}</span></div>

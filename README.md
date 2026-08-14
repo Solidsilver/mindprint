@@ -22,6 +22,11 @@ OSIVQ, VVIQ-style anchors), but this is not a validated test.
 - **Family rooms** (`/room/<CODE>`): everyone posts their result with a 6-character code and
   gets a live overlay radar, per-channel dot strips, and family records (tightest metronome,
   sharpest rotation, most vivid mind's eye, …)
+- **The Lab**: six standalone literature-named tests (3–4 min each) — Visual Patterns Test,
+  digit span, Corsi blocks, anisochrony detection, change-detection K, and the phonological
+  similarity effect demo — each norm-scaled (50 = published adult mean, 15 per SD) and blended
+  into the channel scores by precision weighting. Four of them also run inline in the Thorough
+  tier.
 
 ## Development
 
