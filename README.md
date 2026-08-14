@@ -55,9 +55,10 @@ Environment variables:
 
 ## LLM narratives
 
-With an API key configured, the results screen adds an AI-drafted profile: a custom title
-and description plus **strengths, blindspots, and a "working with this mind" section**, in a
-user-selectable tone (gentle / balanced / playful).
+With an API key configured, the results screen offers an AI-drafted profile behind a
+"Generate strengths & blindspots" button: a custom title and description plus **strengths,
+blindspots, and a "working with your mind" section**, written in direct second person, in a
+user-selectable tone (gentle / balanced / playful). Nothing is generated until asked.
 
 Accuracy and cost design: the model never sees raw scores — profiles are quantized into 0–5
 bands per channel plus notable flags (e.g. `vviq-hyperphantasia`, `metronome-musician-tight`),

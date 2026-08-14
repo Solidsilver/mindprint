@@ -20,11 +20,12 @@
 	}
 	let { profile, viewingShared = false, skips = [], history = [], onClearHistory = null, children }: Props = $props();
 
-	// --- LLM narrative (auto, cached per banded signature; tone is user-pickable) ---
+	// --- LLM narrative: generated on request, cached per banded signature; tone is user-pickable ---
 	const TONES: Tone[] = ['gentle', 'balanced', 'playful'];
 	let tone = $state<Tone>('balanced');
 	let narrative = $state<Narrative | null>(null);
 	let narrativeState = $state<'idle' | 'loading' | 'done' | 'off' | 'error'>('idle');
+	let narrativeError = $state('');
 
 	if (browser) {
 		try {
@@ -33,37 +34,46 @@
 		} catch { /* noop */ }
 	}
 
-	async function fetchNarrative(currentTone: Tone, snapshot: unknown) {
+	async function generate(t: Tone) {
+		if (narrativeState === 'loading') return;
+		tone = t;
+		try { localStorage.setItem('csa_tone', t); } catch { /* noop */ }
 		narrativeState = 'loading';
 		try {
+			const snapshot = JSON.parse(
+				JSON.stringify({ a: profile.a, u: profile.u, e: profile.e, z: profile.z, h: profile.h, t: profile.t, n: '' })
+			);
 			const res = await fetch('/api/narrative', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ profile: snapshot, tone: currentTone })
+				body: JSON.stringify({ profile: snapshot, tone: t })
 			});
 			if (res.status === 503) {
 				narrativeState = 'off';
 				narrative = null;
 				return;
 			}
-			if (!res.ok) throw new Error('bad status');
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { message?: string } | null;
+				narrativeError = body?.message || `generation failed (${res.status})`;
+				narrativeState = 'error';
+				return;
+			}
 			narrative = (await res.json()) as Narrative;
 			narrativeState = 'done';
 		} catch {
-			narrative = null;
+			narrativeError = 'network error — is the server reachable?';
 			narrativeState = 'error';
 		}
 	}
 
-	function pickTone(t: Tone) {
-		tone = t;
-		try { localStorage.setItem('csa_tone', t); } catch { /* noop */ }
-	}
-
+	// a different profile (retake, other share link) invalidates the drafted narrative
+	const profileKey = $derived(JSON.stringify([profile.a, profile.u]));
 	$effect(() => {
-		const snapshot = JSON.parse(JSON.stringify({ a: profile.a, u: profile.u, e: profile.e, z: profile.z, h: profile.h, t: profile.t, n: '' }));
-		const currentTone = tone;
-		fetchNarrative(currentTone, snapshot);
+		void profileKey;
+		narrative = null;
+		narrativeState = 'idle';
+		narrativeError = '';
 	});
 
 	const A = $derived(Object.fromEntries(DIMS.map((d, i) => [d.key, profile.a[i]])));
@@ -136,19 +146,16 @@
 
 <Radar ability={profile.a} usage={profile.u} error={eArr} />
 <p class="text-xs t-ink3 text-center mt-2 mb-8 leading-relaxed max-w-md mx-auto">
-	<strong class="t-ink2">Ability</strong> = what this mind <em>can</em> do on demand; <strong class="t-ink2">Usage</strong> = how often it happens automatically.
+	<strong class="t-ink2">Ability</strong> = what your mind <em>can</em> do on demand; <strong class="t-ink2">Usage</strong> = how often it happens automatically.
 	The shaded band is measurement uncertainty — differences inside it don't mean much.
 </p>
 
 <div class="surface-2 p-6 rounded-2xl mb-8 border hairline">
 	<p id="profile-desc" class="t-ink2 text-[15px] leading-relaxed">{narrative?.description || titleDesc.desc}</p>
-	{#if narrativeState === 'loading'}
-		<p class="text-xs t-ink3 mt-3 animate-pulse inline-flex items-center gap-1.5"><Sparkles size={13} /> Drafting this mind's narrative…</p>
-	{/if}
 </div>
 
-{#if narrative}
-	<div class="surface p-6 rounded-2xl mb-8 border hairline fade-enter">
+{#if narrativeState !== 'off'}
+	<div class="surface p-6 rounded-2xl mb-8 border hairline">
 		<div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
 			<h4 class="text-xs font-bold tracking-[0.2em] t-ink3 uppercase">Strengths &amp; blindspots</h4>
 			<div class="flex gap-1.5 items-center">
@@ -158,44 +165,79 @@
 						style={tone === t
 							? 'background-color: var(--accent-soft); color: var(--accent); border-color: var(--accent);'
 							: 'color: var(--ink-3); border-color: var(--line);'}
-						onclick={() => pickTone(t)}
+						onclick={() => generate(t)}
 						disabled={narrativeState === 'loading'}
 					>{t}</button>
 				{/each}
 			</div>
 		</div>
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-			<div>
-				<div class="text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--good);">Strengths</div>
-				<div class="space-y-3">
-					{#each narrative.strengths as s}
-						<div class="text-sm">
-							<span class="font-semibold t-ink">{s.label}</span>
-							<span class="t-ink2"> — {s.why}</span>
+
+		{#if narrativeState === 'loading'}
+			<div class="py-2" aria-live="polite">
+				<p class="text-xs t-ink3 mb-4 inline-flex items-center gap-1.5 animate-pulse">
+					<Sparkles size={13} /> Drafting the {tone} take…
+				</p>
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					{#each [0, 1] as col (col)}
+						<div class="space-y-3 animate-pulse">
+							<div class="h-3 rounded w-24" style="background-color: var(--line);"></div>
+							<div class="h-3 rounded w-full" style="background-color: var(--line);"></div>
+							<div class="h-3 rounded w-5/6" style="background-color: var(--line);"></div>
+							<div class="h-3 rounded w-4/6" style="background-color: var(--line);"></div>
 						</div>
 					{/each}
 				</div>
 			</div>
-			<div>
-				<div class="text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--warn);">Blindspots</div>
-				<div class="space-y-3">
-					{#each narrative.blindspots as b}
-						<div class="text-sm">
-							<span class="font-semibold t-ink">{b.label}</span>
-							<span class="t-ink2"> — {b.why}</span>
+		{:else if narrativeState === 'done' && narrative}
+			<div class="fade-enter">
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+					<div>
+						<div class="text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--good);">Strengths</div>
+						<div class="space-y-3">
+							{#each narrative.strengths as s}
+								<div class="text-sm">
+									<span class="font-semibold t-ink">{s.label}</span>
+									<span class="t-ink2"> — {s.why}</span>
+								</div>
+							{/each}
 						</div>
-					{/each}
+					</div>
+					<div>
+						<div class="text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--warn);">Blindspots</div>
+						<div class="space-y-3">
+							{#each narrative.blindspots as b}
+								<div class="text-sm">
+									<span class="font-semibold t-ink">{b.label}</span>
+									<span class="t-ink2"> — {b.why}</span>
+								</div>
+							{/each}
+						</div>
+					</div>
 				</div>
+				<div class="surface-2 rounded-xl p-4 border hairline">
+					<div class="text-xs font-bold uppercase tracking-widest t-ink3 mb-2">Working with your mind</div>
+					<p class="text-sm t-ink2 leading-relaxed mb-2">{narrative.communication.style}</p>
+					<p class="text-sm t-ink2 leading-relaxed"><strong class="t-ink">How others can meet you halfway:</strong> {narrative.communication.meet}</p>
+				</div>
+				<p class="text-[11px] t-ink3 mt-4 text-center">
+					Drafted by a language model from banded scores only (exact numbers withheld — they carry measurement error), grounded in the research below, and cached so identical profiles read identically.
+				</p>
 			</div>
-		</div>
-		<div class="surface-2 rounded-xl p-4 border hairline">
-			<div class="text-xs font-bold uppercase tracking-widest t-ink3 mb-2">Working with this mind</div>
-			<p class="text-sm t-ink2 leading-relaxed mb-2">{narrative.communication.style}</p>
-			<p class="text-sm t-ink2 leading-relaxed"><strong class="t-ink">To meet it halfway:</strong> {narrative.communication.meet}</p>
-		</div>
-		<p class="text-[11px] t-ink3 mt-4 text-center">
-			Drafted by a language model from banded scores only (exact numbers withheld — they carry measurement error), grounded in the research below, and cached so identical profiles read identically.
-		</p>
+		{:else}
+			<div class="text-center py-4">
+				{#if narrativeState === 'error'}
+					<p class="text-xs mb-3" style="color: var(--bad);">{narrativeError}</p>
+				{:else}
+					<p class="text-sm t-ink2 mb-4 max-w-md mx-auto">
+						An AI-drafted read of this profile — a custom title, strengths, blindspots, and how others can work with you.
+						Grounded in the research below.
+					</p>
+				{/if}
+				<button onclick={() => generate(tone)} class="px-6 py-3 btn-primary font-semibold rounded-xl text-sm inline-flex items-center gap-2">
+					<Sparkles size={15} /> {narrativeState === 'error' ? 'Try again' : 'Generate strengths & blindspots'}
+				</button>
+			</div>
+		{/if}
 	</div>
 {/if}
 

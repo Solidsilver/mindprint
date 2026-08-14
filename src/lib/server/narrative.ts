@@ -78,7 +78,8 @@ export function bandProfile(profile: Profile): { sig: string; bands: Band[]; fla
 	if (profile.u[1] <= 10 && profile.a[1] <= 35) flags.push('inner-speech-near-silent');
 	flags.sort();
 
-	const sig = 'n1|' + bands.map((b) => `${b.k[0]}${b.a}${b.u}`).join('.') + '|' + flags.join(',');
+	// n2: second-person voice (n1 entries were third-person; version bump retires them)
+	const sig = 'n2|' + bands.map((b) => `${b.k[0]}${b.a}${b.u}`).join('.') + '|' + flags.join(',');
 	return { sig, bands, flags };
 }
 
@@ -144,17 +145,17 @@ function buildMessages(bands: Band[], flags: string[], tone: Tone, fallbackTitle
 
 Every claim must be supported by the fact sheet below. ${TONE_INSTRUCTIONS[tone] || TONE_INSTRUCTIONS.balanced}
 
-Voice: neutral third person — "this mind", "they". Never "you", never a name.
+Voice: direct second person — "you", "your mind". Never a name, never third person.
 
 Respond with ONLY a JSON object, no markdown fences, exactly this shape:
 {
   "title": "The <evocative 2-4 word name>",
-  "description": "<2-3 sentences capturing how this mind works, from the inside>",
-  "strengths": [{"label": "<2-5 words>", "why": "<one sentence>"}, x3],
-  "blindspots": [{"label": "<2-5 words>", "why": "<one sentence, framed with 'may'>"}, x2],
+  "description": "<2-3 sentences capturing how your mind works, spoken directly to you>",
+  "strengths": [{"label": "<2-5 words>", "why": "<one sentence, addressed to you>"}, x3],
+  "blindspots": [{"label": "<2-5 words>", "why": "<one sentence, framed with 'you may'>"}, x2],
   "communication": {
-    "style": "<1-2 sentences: how this mind tends to take in and work through ideas>",
-    "meet": "<1-2 sentences: how family/colleagues can meet it halfway>"
+    "style": "<1-2 sentences: how you tend to take in and work through ideas>",
+    "meet": "<1-2 sentences: how family and colleagues can meet you halfway>"
   }
 }
 

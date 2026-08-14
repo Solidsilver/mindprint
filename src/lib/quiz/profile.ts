@@ -18,36 +18,36 @@ export function generateProfile(A: ChannelScores, U: ChannelScores): TitleDesc {
 
 	let title = 'Balanced Integrator';
 	let desc =
-		'This cognitive profile is remarkably balanced: no single mode dominates. It fluidly switches between visual imagery, inner monologue, spatial mapping, and physical intuition depending on the problem at hand.';
+		'Your profile is remarkably balanced: no single mode dominates. You switch fluidly between visual imagery, inner monologue, spatial mapping, and physical intuition depending on the problem at hand.';
 
 	const scores: ChannelScores = { Visual: v, Verbal: vb, Spatial: s, Kinesthetic: k };
 	const highs = Object.keys(scores).filter((d) => scores[d] >= 70);
 	const sorted = Object.keys(scores).sort((x, y) => scores[y] - scores[x]);
 
 	const pairTitles: Record<string, [string, string]> = {
-		'Verbal+Visual': ['The Cinematic Narrator', 'A mind like a movie with a voiceover: vivid imagery accompanied by a strong inner dialogue. Great for storytelling, reading comprehension, and conceptualizing detailed scenarios.'],
-		'Spatial+Visual': ['The System Architect', 'Thinking in 3D blueprints: objects visualized vividly and their relationships mapped in space. A strong profile for engineering, design, and complex logistics.'],
-		'Spatial+Verbal': ['The Structural Linguist', 'Systems and logic, processed through language: abstract structural maps of concepts (like code or org charts) navigated by a strong inner monologue.'],
-		'Kinesthetic+Spatial': ['The Mechanical Intuitive', 'This mind thinks through the physical world: 3D spatial mapping combined with a strong sense of mechanics and rhythm. Building, navigating, and understanding how physical systems interlock come naturally.'],
-		'Kinesthetic+Visual': ['The Method Actor', 'Scenes are watched and felt at once: vivid imagery fused with felt movement. This mind rehearses life like a performance — seeing the moment and feeling it in the body simultaneously.'],
-		'Kinesthetic+Verbal': ['The Embodied Orator', 'Words and body in lockstep: a strong inner voice that thinks best mid-motion — pacing, gesturing, talking with the hands. Rhythm and rhetoric share one engine here.']
+		'Verbal+Visual': ['The Cinematic Narrator', 'Your mind runs like a movie with a voiceover: vivid imagery accompanied by a strong inner dialogue. Great for storytelling, reading comprehension, and conceptualizing detailed scenarios.'],
+		'Spatial+Visual': ['The System Architect', 'You think in 3D blueprints: objects visualized vividly and their relationships mapped in space. A strong profile for engineering, design, and complex logistics.'],
+		'Spatial+Verbal': ['The Structural Linguist', 'You process systems and logic through language: abstract structural maps of concepts (like code or org charts) navigated by a strong inner monologue.'],
+		'Kinesthetic+Spatial': ['The Mechanical Intuitive', 'You think through the physical world: 3D spatial mapping combined with a strong sense of mechanics and rhythm. Building, navigating, and understanding how physical systems interlock come naturally to you.'],
+		'Kinesthetic+Visual': ['The Method Actor', 'You watch and feel scenes at once: vivid imagery fused with felt movement. You rehearse life like a performance — seeing the moment and feeling it in your body simultaneously.'],
+		'Kinesthetic+Verbal': ['The Embodied Orator', 'Words and body in lockstep: your inner voice thinks best mid-motion — pacing, gesturing, talking with your hands. Rhythm and rhetoric share one engine.']
 	};
 	const soloTitles: Record<string, [string, string]> = {
-		Visual: ['The Pure Eidetic', 'An internal world led by pictures: memories and ideas arrive as clear, vivid images first, with the inner voice and body sense playing supporting roles.'],
-		Verbal: ['The Concept Narrator', 'The world, processed primarily through language and abstract concepts rather than mental pictures. The internal experience is driven by a structured inner monologue — a mind that talks more than it shows.'],
-		Spatial: ['The Navigator', 'This mind leads with layout: maps, arrangements, and relationships in space come first, before pictures or words. Rarely lost, rarely bad at packing a trunk.'],
-		Kinesthetic: ['The Proprioceptive Thinker', "A mind that thinks with the body: the rhythm of a situation, the structure of a mechanical problem, the physical tension of an abstract idea — all felt before they're worded."]
+		Visual: ['The Pure Eidetic', 'Your internal world is led by pictures: memories and ideas arrive as clear, vivid images first, with the inner voice and body sense in supporting roles.'],
+		Verbal: ['The Concept Narrator', 'You process the world primarily through language and abstract concepts rather than mental pictures. A structured inner monologue drives the show — your mind talks more than it shows.'],
+		Spatial: ['The Navigator', 'You lead with layout: maps, arrangements, and relationships in space come first, before pictures or words. Rarely lost, rarely bad at packing a trunk.'],
+		Kinesthetic: ['The Proprioceptive Thinker', "You think with your body: the rhythm of a situation, the structure of a mechanical problem, the physical tension of an abstract idea — all felt before they're worded."]
 	};
 
 	if (v <= 35 && vb <= 35 && s <= 35 && k <= 35) {
 		title = 'Unsymbolized Thinker';
-		desc = "Thought as pure, instantaneous concept — little internal imagery, words, or sensation on the way to a conclusion. Researchers call this 'unsymbolized thinking,' and it shows up in about a quarter of everyone's sampled moments; some minds live there.";
+		desc = "Your thought arrives as pure, instantaneous concept — little imagery, words, or sensation on the way to a conclusion. Researchers call this 'unsymbolized thinking,' and it shows up in about a quarter of everyone's sampled moments; some minds live there.";
 	} else if (highs.length === 4) {
 		title = 'Cognitive Polymath';
-		desc = "A highly active multimodal mind: detailed visual imagery, a strong inner voice, spatial mapping, and physical intuition all running at once. Complex, multi-layered problems are this profile's natural habitat.";
+		desc = "A highly active multimodal mind: you run detailed visual imagery, a strong inner voice, spatial maps, and physical intuition all at once. Complex, multi-layered problems are your natural habitat.";
 	} else if (highs.length === 3) {
 		title = 'Tri-Modal Integrator';
-		desc = `Intensely active across three distinct channels (${highs.join(', ')}). Switching readily between these modes is a big advantage in cross-disciplinary problem solving.`;
+		desc = `You're intensely active across three distinct channels (${highs.join(', ')}). Switching readily between them is a big advantage in cross-disciplinary problem solving.`;
 	} else if (highs.length === 2) {
 		[title, desc] = pairTitles[highs.slice().sort().join('+')];
 	} else if (highs.length === 1) {
@@ -100,7 +100,8 @@ export function buildAnchors(
 	eArr: number[] = [13, 13, 13, 13]
 ): AnchorData {
 	z = z || [];
-	const you = shared ? 'This mind' : 'You';
+	const you = 'You';
+	void shared; // voice is always direct second person now
 	const anchors: AnchorData['anchors'] = [];
 	const vviq = zNum(z[5]);
 	const kinErr = zNum(z[3]);
@@ -152,7 +153,7 @@ export function buildAnchors(
 	const vbU = U.Verbal;
 	let vbText = `Experience-sampling studies catch people in inner speech in about <strong>23% of random moments</strong> on average — but individuals genuinely range from ~0% to 94%.`;
 	if (vbU < 25) vbText += ` A quiet inner world is real and normal — researchers recently named the far end <em>anendophasia</em>.`;
-	else if (vbU > 75) vbText += ` ${you === 'You' ? "You're" : 'This mind is'} on the chatty end — some people are in inner speech nearly every waking moment.`;
+	else if (vbU > 75) vbText += ` You're on the chatty end — some people are in inner speech nearly every waking moment.`;
 	anchors.push({
 		dim: 1, text: vbText,
 		strip: {
@@ -212,7 +213,7 @@ export function buildAnchors(
 	if (orthoV !== null) {
 		const o = orthoV;
 		let oText: string;
-		if (o >= 75) oText = `${you === 'You' ? 'You see' : 'This mind sees'} <strong>written words</strong> while listening to speech — orthographic imagery, the <em>rarest</em> mode in the IRQ's data. A genuinely uncommon inner experience.`;
+		if (o >= 75) oText = `You see <strong>written words</strong> while listening to speech — orthographic imagery, the <em>rarest</em> mode in the IRQ's data. A genuinely uncommon inner experience.`;
 		else if (o <= 25) oText = `No written words appear in the mind's eye while listening — which is the norm; orthographic imagery is the rarest and most spread-out mode the IRQ measures.`;
 		else oText = `Some orthographic imagery — occasionally seeing words written out while hearing them. It's the rarest and most variable mode the IRQ measures.`;
 		ortho = { rating: o, text: oText };
