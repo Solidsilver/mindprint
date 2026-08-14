@@ -206,11 +206,14 @@ async function callLLM(messages: ChatMessage[]): Promise<{ parsed: unknown; mode
 	const common = { model, messages };
 	const attempts: Record<string, unknown>[] = [
 		{ ...common, temperature: 0.8, max_tokens: 1200, response_format: { type: 'json_object' } },
-		{ ...common, temperature: 0.8, max_tokens: 1200 },
-		// reasoning-style models: max_completion_tokens, default temperature,
-		// and generous headroom because reasoning tokens count against the cap
-		{ ...common, max_completion_tokens: 4000, response_format: { type: 'json_object' } },
-		{ ...common, max_completion_tokens: 4000 },
+		// reasoning models burn the cap on thinking and return empty content —
+		// same classic params with generous headroom (reachable when the
+		// provider accepts max_tokens but the model reasons, e.g. Fireworks)
+		{ ...common, temperature: 0.8, max_tokens: 8000, response_format: { type: 'json_object' } },
+		{ ...common, max_tokens: 8000, response_format: { type: 'json_object' } },
+		// newer OpenAI models reject max_tokens/temperature entirely
+		{ ...common, max_completion_tokens: 8000, response_format: { type: 'json_object' } },
+		{ ...common, max_completion_tokens: 8000 },
 		{ ...common }
 	];
 
@@ -241,14 +244,28 @@ async function callLLM(messages: ChatMessage[]): Promise<{ parsed: unknown; mode
 					throw new Error(`auth failed (${res.status}) — check OPENAI_API_KEY. ${text}`);
 				throw new Error(`LLM endpoint ${lastErr}`);
 			}
-			const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-			let text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-			if (!text) throw new Error(`empty completion from model "${model}" (finish likely hit the token cap)`);
+			const data = (await res.json()) as { choices?: { message?: { content?: string }; text?: string }[] };
+			const choice = data.choices && data.choices[0];
+			let text = (choice && choice.message && choice.message.content) || (choice && choice.text) || '';
+			if (!text) {
+				// reasoning models return empty content when thinking ate the cap —
+				// the next rung raises the headroom, so keep climbing
+				lastErr = `empty completion from model "${model}" (reasoning likely consumed the token cap)`;
+				continue;
+			}
 			text = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 			const start = text.indexOf('{');
 			const end = text.lastIndexOf('}');
-			if (start === -1 || end === -1) throw new Error(`model "${model}" returned no JSON`);
-			return { parsed: JSON.parse(text.slice(start, end + 1)), model };
+			if (start === -1 || end === -1) {
+				lastErr = `model "${model}" returned no JSON`;
+				continue;
+			}
+			try {
+				return { parsed: JSON.parse(text.slice(start, end + 1)), model };
+			} catch {
+				lastErr = `model "${model}" returned malformed JSON`;
+				continue;
+			}
 		} finally {
 			clearTimeout(timer);
 		}
