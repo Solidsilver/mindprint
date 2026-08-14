@@ -32,10 +32,14 @@ OSIVQ, VVIQ-style anchors), but this is not a validated test.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # production build (adapter-node) into ./build
-PORT=3000 node build/index.js
+cp .env.example .env   # optional: local config (LLM key, port, …)
+npm run dev            # http://localhost:5173 — picks up .env automatically
+npm run build          # production build (adapter-node) into ./build
+npm start              # runs the build with .env (node --env-file)
 ```
+
+`.env` is gitignored; `.env.example` documents every variable. The dev server loads it via
+SvelteKit/Vite; `npm start` loads it via Node's native `--env-file-if-exists`.
 
 Environment variables:
 
