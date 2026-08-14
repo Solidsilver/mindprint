@@ -20,7 +20,7 @@
 	import ChangeDetectionTest from '$lib/components/lab/ChangeDetectionTest.svelte';
 	import PseTest from '$lib/components/lab/PseTest.svelte';
 	import { onMount } from 'svelte';
-	import { FlaskConical } from '@lucide/svelte';
+	import { ChevronDown, FlaskConical } from '@lucide/svelte';
 	import type { Answer, LabResult, LabTestId, Profile, Question, Sitting, TierName } from '$lib/quiz/types';
 
 	const LAB_COMPONENTS = {
@@ -200,26 +200,63 @@
 <div class="p-8 sm:p-12">
 	{#if screen === 'intro'}
 		<div class="text-center fade-enter">
-			<div class="mb-8 flex justify-center gap-3">
+			<div class="mb-7 flex justify-center gap-2 sm:gap-4">
 				{#each DIMS as d, i}
-					<div class="w-11 h-11 rounded-2xl flex items-center justify-center border hairline" style="color: var(--dim-{i}); background-color: var(--card-2);" title={d.key}>
-						{@html d.glyph}
+					<div class="flex flex-col items-center gap-1.5 w-16">
+						<div class="w-11 h-11 rounded-2xl flex items-center justify-center border hairline" style="color: var(--dim-{i}); background-color: var(--card-2);">
+							{@html d.glyph}
+						</div>
+						<span class="text-[9px] font-bold uppercase tracking-widest t-ink3">{d.key}</span>
 					</div>
 				{/each}
 			</div>
-			<div class="text-xs font-bold tracking-[0.2em] uppercase t-ink3 mb-3">A field guide to your inner world</div>
-			<h1 class="font-display text-4xl sm:text-5xl font-semibold mb-6 t-ink">How does your mind think?</h1>
-			<p class="t-ink2 mb-4 leading-relaxed text-[15px]">
-				Some minds run a movie. Some narrate everything. Some think in maps, and some in muscle.
-				About 1 in 100 people have no mind's eye at all (<em>aphantasia</em>), while 1 in 16 see mental images as vividly as
-				real life — and inner speech ranges from “never” to “nearly every waking moment.”
+			<div class="text-xs font-bold tracking-[0.2em] uppercase t-ink3 mb-2">A field guide to your inner world</div>
+			<h1 class="font-display text-5xl sm:text-6xl font-semibold mb-4 t-accent">Mindprint</h1>
+			<p class="t-ink2 mb-8 leading-relaxed text-[15px] max-w-md mx-auto">
+				Some minds run a movie. Some narrate everything. Some think in maps, or in muscle. A few minutes of questions and
+				mini-games map how <em>yours</em> works — into a profile you can share and compare.
 			</p>
-			<p class="t-ink2 mb-8 leading-relaxed text-[15px]">
-				Self-reports plus tiny objective tests map your mind across four channels —
-				<strong class="t-ink">Visual, Verbal, Spatial, Kinesthetic</strong> — into your shareable
-				<span class="font-display t-accent text-lg">Mindprint</span>. Like a real psychology instrument, more questions mean a
-				more accurate score: pick your depth.
-			</p>
+
+			<div class="space-y-2 mb-8 text-left">
+				<details class="details-card surface-2 border hairline rounded-2xl">
+					<summary class="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer select-none">
+						<span class="text-sm font-semibold t-ink">The science in 30 seconds</span>
+						<ChevronDown size={16} class="chev t-ink3 shrink-0" />
+					</summary>
+					<div class="px-5 pb-5 text-sm t-ink2 leading-relaxed space-y-3">
+						<p>
+							Inner experience genuinely differs: about <strong class="t-ink">1 in 100</strong> people have no mind's eye at
+							all (<em>aphantasia</em>), roughly 1 in 16 see mental images as vividly as real life, and inner speech ranges
+							from “never” to “nearly every waking moment.”
+						</p>
+						<p>
+							Mindprint maps four channels — <strong class="t-ink">Visual, Verbal, Spatial, Kinesthetic</strong> — each two
+							ways: what your mind <em>can</em> do on demand, and what it does <em>by default</em>.
+						</p>
+						<p>
+							Questions and score anchors come from openly published instruments (VVIQ, IRQ, OSIVQ, VISQ) and classic lab
+							tasks. For fun, not diagnosis — and no, this isn't “learning styles”: differences in inner experience are
+							real, but teaching to them is a myth.
+						</p>
+					</div>
+				</details>
+				<details class="details-card surface-2 border hairline rounded-2xl">
+					<summary class="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer select-none">
+						<span class="text-sm font-semibold t-ink">What does “±9 typical error” mean?</span>
+						<ChevronDown size={16} class="chev t-ink3 shrink-0" />
+					</summary>
+					<div class="px-5 pb-5 text-sm t-ink2 leading-relaxed space-y-3">
+						<p>
+							Every measurement carries noise. Like a real psychology instrument, more questions mean a more accurate score
+							— that's the only difference between the depths below.
+						</p>
+						<p>
+							Channel scores run 0–100; the ± number is the typical wobble you'd see on a retake. Retaking on another day —
+							at any depth — averages into your profile and tightens it further.
+						</p>
+					</div>
+				</details>
+			</div>
 
 			<div class="space-y-3 mb-8 text-left">
 				<button class="tier-card w-full rounded-2xl p-5 sm:flex sm:items-center sm:gap-4" onclick={() => start('quick')}>
@@ -251,10 +288,7 @@
 			{#if profile}
 				<button class="text-sm font-semibold t-accent underline mb-4" onclick={() => (screen = 'results')}>← Back to your results</button>
 			{/if}
-			<p class="text-xs t-ink3 leading-relaxed">
-				Retakes on any day average into your profile and tighten the error further.<br />
-				For fun, not diagnosis — built on items and norms from real instruments (VVIQ, IRQ, OSIVQ, VISQ) but not a validated test.
-			</p>
+			<p class="text-xs t-ink3 leading-relaxed">For fun, not diagnosis · retakes sharpen your Mindprint</p>
 		</div>
 	{:else if screen === 'quiz' && q}
 		<div class="fade-enter">
