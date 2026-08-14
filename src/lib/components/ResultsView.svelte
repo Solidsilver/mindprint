@@ -148,7 +148,7 @@
 			<div class="flex gap-1.5 items-center">
 				{#each TONES as t}
 					<button
-						class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-colors"
+						class="tone-pill px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-colors"
 						style={tone === t
 							? 'background-color: var(--accent-soft); color: var(--accent); border-color: var(--accent);'
 							: 'color: var(--ink-3); border-color: var(--line);'}

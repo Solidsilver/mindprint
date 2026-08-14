@@ -40,7 +40,7 @@
 		{#each strip.segments as seg}
 			{@const w = pct(seg.to) - pct(seg.from)}
 			{#if w >= 12}
-				<span class="absolute text-center overflow-hidden whitespace-nowrap" style="left: {pct(seg.from)}%; width: {w}%;">{seg.label}</span>
+				<span class="absolute text-center truncate" style="left: {pct(seg.from)}%; width: {w}%;">{seg.label}</span>
 			{/if}
 		{/each}
 	</div>

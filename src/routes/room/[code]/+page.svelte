@@ -129,20 +129,23 @@
 			<table class="w-full text-sm">
 				<thead>
 					<tr class="border-b hairline-2">
-						<th class="text-left py-2 pr-3 t-ink3 text-xs font-bold uppercase tracking-widest">Member</th>
-						<th class="text-left py-2 px-3 t-ink3 text-xs font-bold uppercase tracking-widest">Profile</th>
+						<th class="text-left py-2 pr-2 sm:pr-3 t-ink3 text-xs font-bold uppercase tracking-widest">Member</th>
+						<th class="text-left py-2 px-3 t-ink3 text-xs font-bold uppercase tracking-widest hidden sm:table-cell">Profile</th>
 						{#each DIMS as d, i}
-							<th class="text-right py-2 px-2 text-xs font-bold" style="color: var(--dim-{i})">{d.key.slice(0, 3)}</th>
+							<th class="text-right py-2 px-1.5 sm:px-2 text-xs font-bold" style="color: var(--dim-{i})">{d.key.slice(0, 3)}</th>
 						{/each}
 					</tr>
 				</thead>
 				<tbody>
 					{#each members as m}
 						<tr class="border-b hairline {m.n === myName ? 'font-semibold' : ''}">
-							<td class="py-2.5 pr-3 t-ink">{m.n}</td>
-							<td class="py-2.5 px-3 t-ink2 font-display">{titleOf(m)}</td>
+							<td class="py-2.5 pr-2 sm:pr-3 t-ink">
+								{m.n}
+								<span class="block sm:hidden font-display text-xs t-ink2 font-normal">{titleOf(m)}</span>
+							</td>
+							<td class="py-2.5 px-3 t-ink2 font-display hidden sm:table-cell">{titleOf(m)}</td>
 							{#each DIMS as d, j}
-								<td class="text-right py-2.5 px-2 tabular-nums t-ink">{overall(m, j)}</td>
+								<td class="text-right py-2.5 px-1.5 sm:px-2 tabular-nums t-ink">{overall(m, j)}</td>
 							{/each}
 						</tr>
 					{/each}

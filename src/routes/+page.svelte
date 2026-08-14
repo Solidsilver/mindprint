@@ -185,14 +185,14 @@
 			</p>
 
 			<div class="space-y-3 mb-8 text-left">
-				<button class="tier-card w-full rounded-2xl p-5 flex items-center gap-4" onclick={() => start('quick')}>
+				<button class="tier-card w-full rounded-2xl p-5 sm:flex sm:items-center sm:gap-4" onclick={() => start('quick')}>
 					<div class="flex-1">
 						<div class="font-bold t-ink">Quick <span class="t-ink3 font-semibold text-sm">· ~5 min</span></div>
 						<div class="text-sm t-ink2 mt-0.5">One question of each kind per channel. A fun ballpark.</div>
 					</div>
-					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums">±13 typical error</div>
+					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums mt-2 sm:mt-0">±13 typical error</div>
 				</button>
-				<button class="tier-card w-full rounded-2xl p-5 flex items-center gap-4" style="border-color: var(--accent);" onclick={() => start('standard')}>
+				<button class="tier-card w-full rounded-2xl p-5 sm:flex sm:items-center sm:gap-4" style="border-color: var(--accent);" onclick={() => start('standard')}>
 					<div class="flex-1">
 						<div class="font-bold t-ink">
 							Standard <span class="t-ink3 font-semibold text-sm">· ~15 min</span>
@@ -200,14 +200,14 @@
 						</div>
 						<div class="text-sm t-ink2 mt-0.5">Four statements per channel and 6-trial objective tests. A solid measurement.</div>
 					</div>
-					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums">±9 typical error</div>
+					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums mt-2 sm:mt-0">±9 typical error</div>
 				</button>
-				<button class="tier-card w-full rounded-2xl p-5 flex items-center gap-4" onclick={() => start('thorough')}>
+				<button class="tier-card w-full rounded-2xl p-5 sm:flex sm:items-center sm:gap-4" onclick={() => start('thorough')}>
 					<div class="flex-1">
 						<div class="font-bold t-ink">Thorough <span class="t-ink3 font-semibold text-sm">· ~35 min</span></div>
 						<div class="text-sm t-ink2 mt-0.5">A real mini-VVIQ mapped to published norms, 10–12-trial tests with reaction-time scoring, and a two-tempo rhythm battery.</div>
 					</div>
-					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums">±7 typical error</div>
+					<div class="text-xs font-bold t-ink3 whitespace-nowrap tabular-nums mt-2 sm:mt-0">±7 typical error</div>
 				</button>
 			</div>
 
