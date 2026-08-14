@@ -229,8 +229,14 @@ async function callLLM(messages: ChatMessage[]): Promise<{ parsed: unknown; mode
 				const text = (await res.text()).slice(0, 300);
 				lastErr = `${res.status}: ${text}`;
 				if (res.status === 400 || res.status === 422) continue; // parameter mismatch — try the next variant
-				if (res.status === 404)
+				if (res.status === 404) {
+					// providers 404 both for wrong paths and unknown models — read the body
+					if (/model/i.test(text))
+						throw new Error(
+							`model "${model}" not found at this provider — set OPENAI_MODEL to a model it serves (e.g. Fireworks needs the full "accounts/fireworks/models/…" id). ${text}`
+						);
 					throw new Error(`404 from ${url} — check OPENAI_BASE_URL (it usually needs to end in /v1). ${text}`);
+				}
 				if (res.status === 401 || res.status === 403)
 					throw new Error(`auth failed (${res.status}) — check OPENAI_API_KEY. ${text}`);
 				throw new Error(`LLM endpoint ${lastErr}`);
