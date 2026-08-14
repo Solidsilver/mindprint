@@ -20,12 +20,19 @@
 	}
 	let { profile, viewingShared = false, skips = [], history = [], onClearHistory = null, children }: Props = $props();
 
-	// --- LLM narrative: generated on request, cached per banded signature; tone is user-pickable ---
+	// --- LLM narrative: generated on request, cached per banded signature; tone is a segmented control ---
 	const TONES: Tone[] = ['gentle', 'balanced', 'playful'];
+	const TONE_BLURBS: Record<Tone, string> = {
+		gentle: 'Warm and generous — blindspots framed softly, leading with the upside.',
+		balanced: 'Honest but kind — real friction points, each paired with what to do about them.',
+		playful: 'An affectionate roast — teasing where it’s true, accurate underneath the jokes.'
+	};
 	let tone = $state<Tone>('balanced');
-	let narrative = $state<Narrative | null>(null);
-	let narrativeState = $state<'idle' | 'loading' | 'done' | 'off' | 'error'>('idle');
-	let narrativeError = $state('');
+	// drafts kept per tone, so sliding back to a generated take is instant
+	let drafts = $state<Partial<Record<Tone, Narrative>>>({});
+	let loadingTone = $state<Tone | null>(null);
+	let toneErrors = $state<Partial<Record<Tone, string>>>({});
+	let narrativesOff = $state(false);
 
 	if (browser) {
 		try {
@@ -34,11 +41,18 @@
 		} catch { /* noop */ }
 	}
 
-	async function generate(t: Tone) {
-		if (narrativeState === 'loading') return;
+	const narrative = $derived(drafts[tone] ?? null);
+
+	function pickTone(t: Tone) {
 		tone = t;
 		try { localStorage.setItem('csa_tone', t); } catch { /* noop */ }
-		narrativeState = 'loading';
+	}
+
+	async function generate() {
+		if (loadingTone) return;
+		const t = tone;
+		loadingTone = t;
+		toneErrors = { ...toneErrors, [t]: undefined };
 		try {
 			const snapshot = JSON.parse(
 				JSON.stringify({ a: profile.a, u: profile.u, e: profile.e, z: profile.z, h: profile.h, t: profile.t, n: '' })
@@ -49,31 +63,29 @@
 				body: JSON.stringify({ profile: snapshot, tone: t })
 			});
 			if (res.status === 503) {
-				narrativeState = 'off';
-				narrative = null;
+				narrativesOff = true;
 				return;
 			}
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
-				narrativeError = body?.message || `generation failed (${res.status})`;
-				narrativeState = 'error';
+				toneErrors = { ...toneErrors, [t]: body?.message || `generation failed (${res.status})` };
 				return;
 			}
-			narrative = (await res.json()) as Narrative;
-			narrativeState = 'done';
+			drafts = { ...drafts, [t]: (await res.json()) as Narrative };
 		} catch {
-			narrativeError = 'network error — is the server reachable?';
-			narrativeState = 'error';
+			toneErrors = { ...toneErrors, [t]: 'network error — is the server reachable?' };
+		} finally {
+			loadingTone = null;
 		}
 	}
 
-	// a different profile (retake, other share link) invalidates the drafted narrative
+	// a different profile (retake, other share link) invalidates the drafted narratives
 	const profileKey = $derived(JSON.stringify([profile.a, profile.u]));
 	$effect(() => {
 		void profileKey;
-		narrative = null;
-		narrativeState = 'idle';
-		narrativeError = '';
+		drafts = {};
+		toneErrors = {};
+		loadingTone = null;
 	});
 
 	const A = $derived(Object.fromEntries(DIMS.map((d, i) => [d.key, profile.a[i]])));
@@ -154,25 +166,25 @@
 	<p id="profile-desc" class="t-ink2 text-[15px] leading-relaxed">{narrative?.description || titleDesc.desc}</p>
 </div>
 
-{#if narrativeState !== 'off'}
+{#if !narrativesOff}
 	<div class="surface p-6 rounded-2xl mb-8 border hairline">
 		<div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
 			<h4 class="text-xs font-bold tracking-[0.2em] t-ink3 uppercase">Strengths &amp; blindspots</h4>
-			<div class="flex gap-1.5 items-center">
+			<div class="seg" role="tablist" aria-label="Narrative tone">
+				<div class="seg-thumb" style="transform: translateX({TONES.indexOf(tone) * 100}%);"></div>
 				{#each TONES as t}
 					<button
-						class="tone-pill px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-colors"
-						style={tone === t
-							? 'background-color: var(--accent-soft); color: var(--accent); border-color: var(--accent);'
-							: 'color: var(--ink-3); border-color: var(--line);'}
-						onclick={() => generate(t)}
-						disabled={narrativeState === 'loading'}
+						role="tab"
+						aria-selected={tone === t}
+						class="seg-btn"
+						style="color: {tone === t ? 'var(--accent)' : 'var(--ink-3)'};"
+						onclick={() => pickTone(t)}
 					>{t}</button>
 				{/each}
 			</div>
 		</div>
 
-		{#if narrativeState === 'loading'}
+		{#if loadingTone === tone}
 			<div class="py-2" aria-live="polite">
 				<p class="text-xs t-ink3 mb-4 inline-flex items-center gap-1.5 animate-pulse">
 					<Sparkles size={13} /> Drafting the {tone} take…
@@ -188,7 +200,7 @@
 					{/each}
 				</div>
 			</div>
-		{:else if narrativeState === 'done' && narrative}
+		{:else if narrative}
 			<div class="fade-enter">
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
 					<div>
@@ -225,16 +237,21 @@
 			</div>
 		{:else}
 			<div class="text-center py-4">
-				{#if narrativeState === 'error'}
-					<p class="text-xs mb-3" style="color: var(--bad);">{narrativeError}</p>
-				{:else}
-					<p class="text-sm t-ink2 mb-4 max-w-md mx-auto">
-						An AI-drafted read of this profile — a custom title, strengths, blindspots, and how others can work with you.
-						Grounded in the research below.
-					</p>
+				<p class="text-sm t-ink2 mb-1 max-w-md mx-auto">
+					<strong class="t-ink capitalize">{tone}</strong> — {TONE_BLURBS[tone]}
+				</p>
+				<p class="text-xs t-ink3 mb-4 max-w-md mx-auto">
+					An AI-drafted read of your profile, grounded in the research below.
+				</p>
+				{#if toneErrors[tone]}
+					<p class="text-xs mb-3" style="color: var(--bad);">{toneErrors[tone]}</p>
 				{/if}
-				<button onclick={() => generate(tone)} class="px-6 py-3 btn-primary font-semibold rounded-xl text-sm inline-flex items-center gap-2">
-					<Sparkles size={15} /> {narrativeState === 'error' ? 'Try again' : 'Generate strengths & blindspots'}
+				<button
+					onclick={generate}
+					disabled={loadingTone !== null}
+					class="px-6 py-3 btn-primary font-semibold rounded-xl text-sm inline-flex items-center gap-2"
+				>
+					<Sparkles size={15} /> {toneErrors[tone] ? 'Try again' : 'Generate strengths & blindspots'}
 				</button>
 			</div>
 		{/if}
