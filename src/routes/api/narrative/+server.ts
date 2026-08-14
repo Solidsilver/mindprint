@@ -26,7 +26,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		const narrative = await getOrCreateNarrative(profile, tone);
 		return json(narrative);
 	} catch (e) {
-		console.error('narrative generation failed:', e instanceof Error ? e.message : e);
-		throw error(502, 'narrative generation failed');
+		const msg = e instanceof Error ? e.message : String(e);
+		console.error('narrative generation failed:', msg);
+		// surface the reason (provider status/body excerpt — never contains the key)
+		throw error(502, `narrative generation failed — ${msg.slice(0, 220)}`);
 	}
 };

@@ -195,36 +195,59 @@ function validateNarrative(obj: unknown): Narrative | null {
 }
 
 // --- LLM call ---
-async function callLLM(messages: ChatMessage[], withJsonMode: boolean): Promise<{ parsed: unknown; model: string }> {
+// OpenAI-compatible servers disagree about parameters: newer OpenAI models
+// reject max_tokens (want max_completion_tokens) and non-default temperature;
+// some local servers reject response_format. On a 400/422 we walk this ladder
+// of progressively plainer requests instead of failing.
+async function callLLM(messages: ChatMessage[]): Promise<{ parsed: unknown; model: string }> {
 	const base = (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
+	const url = base.endsWith('/chat/completions') ? base : base + '/chat/completions';
 	const model = env.OPENAI_MODEL || 'gpt-4o-mini';
-	const body: Record<string, unknown> = { model, messages, temperature: 0.8, max_tokens: 900 };
-	if (withJsonMode) body.response_format = { type: 'json_object' };
-	const ctrl = new AbortController();
-	const timer = setTimeout(() => ctrl.abort(), 45000);
-	try {
-		const res = await fetch(base + '/chat/completions', {
-			method: 'POST',
-			headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
-			body: JSON.stringify(body),
-			signal: ctrl.signal
-		});
-		if (!res.ok) {
-			// some OpenAI-compatible servers reject response_format — retry plain once
-			if (withJsonMode && res.status === 400) return callLLM(messages, false);
-			throw new Error(`LLM endpoint ${res.status}`);
+	const common = { model, messages };
+	const attempts: Record<string, unknown>[] = [
+		{ ...common, temperature: 0.8, max_tokens: 1200, response_format: { type: 'json_object' } },
+		{ ...common, temperature: 0.8, max_tokens: 1200 },
+		// reasoning-style models: max_completion_tokens, default temperature,
+		// and generous headroom because reasoning tokens count against the cap
+		{ ...common, max_completion_tokens: 4000, response_format: { type: 'json_object' } },
+		{ ...common, max_completion_tokens: 4000 },
+		{ ...common }
+	];
+
+	let lastErr = '';
+	for (const body of attempts) {
+		const ctrl = new AbortController();
+		const timer = setTimeout(() => ctrl.abort(), 60000);
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
+				body: JSON.stringify(body),
+				signal: ctrl.signal
+			});
+			if (!res.ok) {
+				const text = (await res.text()).slice(0, 300);
+				lastErr = `${res.status}: ${text}`;
+				if (res.status === 400 || res.status === 422) continue; // parameter mismatch — try the next variant
+				if (res.status === 404)
+					throw new Error(`404 from ${url} — check OPENAI_BASE_URL (it usually needs to end in /v1). ${text}`);
+				if (res.status === 401 || res.status === 403)
+					throw new Error(`auth failed (${res.status}) — check OPENAI_API_KEY. ${text}`);
+				throw new Error(`LLM endpoint ${lastErr}`);
+			}
+			const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+			let text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+			if (!text) throw new Error(`empty completion from model "${model}" (finish likely hit the token cap)`);
+			text = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+			const start = text.indexOf('{');
+			const end = text.lastIndexOf('}');
+			if (start === -1 || end === -1) throw new Error(`model "${model}" returned no JSON`);
+			return { parsed: JSON.parse(text.slice(start, end + 1)), model };
+		} finally {
+			clearTimeout(timer);
 		}
-		const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-		let text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-		if (!text) throw new Error('empty completion');
-		text = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-		const start = text.indexOf('{');
-		const end = text.lastIndexOf('}');
-		if (start === -1 || end === -1) throw new Error('no JSON in completion');
-		return { parsed: JSON.parse(text.slice(start, end + 1)), model };
-	} finally {
-		clearTimeout(timer);
 	}
+	throw new Error(`LLM endpoint rejected every request variant — last error ${lastErr}`);
 }
 
 // --- Cache + in-flight dedupe ---
@@ -264,7 +287,7 @@ export async function getOrCreateNarrative(profile: Profile, tone: Tone): Promis
 		const A = Object.fromEntries(DIM_KEYS.map((k, i) => [k, profile.a[i]]));
 		const U = Object.fromEntries(DIM_KEYS.map((k, i) => [k, profile.u[i]]));
 		const fallbackTitle = generateProfile(A, U).title;
-		const { parsed, model } = await callLLM(buildMessages(bands, flags, tone, fallbackTitle), true);
+		const { parsed, model } = await callLLM(buildMessages(bands, flags, tone, fallbackTitle));
 		const narrative = validateNarrative(parsed);
 		if (!narrative) throw new Error('LLM output failed validation');
 		db.prepare(
