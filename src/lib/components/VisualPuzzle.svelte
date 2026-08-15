@@ -23,8 +23,16 @@
 	const VP_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#92400e'];
 	const nTrials = untrack(() => TIER_INFO[tier].mem);
 
+	// graduated difficulty: an easy 2x2 first, then 3x3, then 4x4
+	function sizeFor(ti: number): number {
+		if (ti === 0) return 2;
+		if (tier === 'quick') return 3;
+		return ti >= 3 ? 4 : 3;
+	}
+	const SHOW_MS: Record<number, number> = { 2: 1500, 3: 2000, 4: 2500 };
+
 	function makeTrial(ti: number): Trial {
-		const size = ti >= 3 && tier !== 'quick' ? 4 : 3;
+		const size = sizeFor(ti);
 		const cells = size * size;
 		let grid: string[];
 		if (cells <= VP_COLORS.length) {
@@ -35,7 +43,7 @@
 		const targetIndex = Math.floor(Math.random() * cells);
 		const targetColor = grid[targetIndex];
 		const opts = shuffle([targetColor, ...sample(VP_COLORS.filter((c) => c !== targetColor), 3)]);
-		return { size, grid, targetIndex, targetColor, opts, showMs: size === 4 ? 2500 : 2000 };
+		return { size, grid, targetIndex, targetColor, opts, showMs: SHOW_MS[size] };
 	}
 
 	// seed-once: scratch persists across back-navigation remounts (untrack = intentional)
@@ -84,7 +92,7 @@
 		{#if phase === 'ready'}
 			<p class="text-[15px] t-ink2 font-medium mb-6">
 				A grid of colors will flash for {trial.showMs / 1000} seconds. Memorize it — then you'll be asked about one square.
-				{#if trial.size === 4}<strong class="t-ink">This one is bigger.</strong>{/if}
+				{#if trial.size === 2}<strong class="t-ink">Starting small.</strong>{:else if trial.size === 4}<strong class="t-ink">This one is bigger.</strong>{/if}
 			</p>
 			<button class="px-6 py-3 btn-primary font-semibold rounded-xl mb-6" onclick={start}>
 				{trialIdx === 0 ? 'Start visual test' : `Start trial ${trialIdx + 1}`}

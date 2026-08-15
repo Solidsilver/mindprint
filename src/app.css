@@ -130,6 +130,7 @@ body {
 	gap: 8px;
 	margin: 0 auto;
 }
+.color-grid.g2 { grid-template-columns: repeat(2, 1fr); max-width: 170px; }
 .color-grid.g3 { grid-template-columns: repeat(3, 1fr); max-width: 250px; }
 .color-grid.g4 { grid-template-columns: repeat(4, 1fr); max-width: 300px; }
 .color-cell {

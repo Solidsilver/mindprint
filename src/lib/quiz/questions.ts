@@ -55,22 +55,22 @@ export const PLANE_QS: { text: string; subtext: string }[] = [
 	{
 		text: 'Imagine a red apple on a table. How clearly do you see it — and how often do images like this appear on their own?',
 		subtext:
-			"<strong>Up/Down (Ability):</strong> I can summon a photorealistic image vs. I can't picture it at all.<br><strong>Left/Right (Usage):</strong> Images pop into my head constantly vs. only when I actively try."
+			'<strong>Up ↕ Down:</strong> clear picture … no picture at all<br><strong>Left ↔ Right:</strong> images only when I try … images pop up all day'
 	},
 	{
 		text: 'When reading a book or thinking through a problem, do you hear a voice in your head?',
 		subtext:
-			"<strong>Up/Down (Ability):</strong> I can generate a clear mental voice (accent and all) vs. I can't hear a mental voice.<br><strong>Left/Right (Usage):</strong> My mind narrates constantly vs. my mind is verbally silent."
+			'<strong>Up ↕ Down:</strong> clear inner voice … no inner voice<br><strong>Left ↔ Right:</strong> mostly silent … narrating constantly'
 	},
 	{
 		text: 'When packing a car trunk or navigating a new building, do you mentally map it out?',
 		subtext:
-			'<strong>Up/Down (Ability):</strong> I can effortlessly rotate 3D objects and layouts in my head vs. I struggle to picture arrangements.<br><strong>Left/Right (Usage):</strong> I constantly think in spatial layouts vs. rarely.'
+			'<strong>Up ↕ Down:</strong> easy to rotate things in my head … very hard<br><strong>Left ↔ Right:</strong> rarely think in maps … think in maps all the time'
 	},
 	{
 		text: 'When recalling a favorite song or watching a sport, do you feel it in your body?',
 		subtext:
-			'<strong>Up/Down (Ability):</strong> I can perfectly rehearse a physical motion in my mind vs. I struggle to ‘feel’ it.<br><strong>Left/Right (Usage):</strong> I constantly feel rhythms and physical urges while thinking vs. rarely.'
+			'<strong>Up ↕ Down:</strong> I can “feel” an imagined movement … not at all<br><strong>Left ↔ Right:</strong> rarely feel rhythm while thinking … constantly'
 	}
 ];
 
