@@ -15,9 +15,9 @@
           version = "1.0.0";
           src = ./.;
 
-          # First build: leave as-is, run `nix build .#mindprint`, copy the
-          # "got: sha256-…" hash from the error into this field.
-          npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          # Pinned via `nix run nixpkgs#prefetch-npm-deps -- package-lock.json`;
+          # re-pin whenever package-lock.json changes.
+          npmDepsHash = "sha256-gTQkAVn4QrloBYubhcxvUYeDHvkPjYjqLuuc7UzT0wc=";
 
           # better-sqlite3 compiles from source inside the sandbox (its
           # prebuilt-binary download is blocked); node-gyp needs python3.
